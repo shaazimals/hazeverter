@@ -37,62 +37,45 @@ module.exports = async function handler(req, res) {
 
 
     if (!clientId || !clientSecret) {
-
       throw new Error(
-        "ADOBE_CLIENT_ID / ADOBE_CLIENT_SECRET belum tersedia"
+        "Adobe credential tidak ditemukan"
       );
-
     }
 
 
-
-    // ==========================
-    // READ UPLOADED FILE
-    // ==========================
-
     const fileBuffer = await new Promise((resolve, reject) => {
-
 
       const busboy = Busboy({
         headers: req.headers
       });
 
-
-      let chunks = [];
-
-
-      busboy.on("file", (fieldname, file) => {
+      const chunks = [];
 
 
-        file.on("data", (chunk) => {
+      busboy.on("file", (name, file) => {
+
+        file.on("data", chunk => {
           chunks.push(chunk);
         });
 
-
         file.on("error", reject);
-
 
       });
 
 
-
       busboy.on("finish", () => {
-
 
         resolve(
           Buffer.concat(chunks)
         );
 
-
       });
-
 
 
       busboy.on("error", reject);
 
 
       req.pipe(busboy);
-
 
     });
 
@@ -101,7 +84,7 @@ module.exports = async function handler(req, res) {
     if (!fileBuffer || fileBuffer.length === 0) {
 
       throw new Error(
-        "File PDF tidak terbaca"
+        "PDF tidak terbaca"
       );
 
     }
@@ -109,22 +92,16 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "PDF RECEIVED:",
+      "FILE SIZE:",
       fileBuffer.length
     );
 
-
-
-    // ==========================
-    // ADOBE AUTH
-    // ==========================
 
 
     const credentials =
       new ServicePrincipalCredentials({
 
         clientId,
-
         clientSecret
 
       });
@@ -140,13 +117,8 @@ module.exports = async function handler(req, res) {
 
 
 
-    // ==========================
-    // UPLOAD PDF
-    // ==========================
-
-
     console.log(
-      "Uploading asset..."
+      "UPLOAD START"
     );
 
 
@@ -164,14 +136,9 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "Asset uploaded"
+      "UPLOAD SUCCESS"
     );
 
-
-
-    // ==========================
-    // CREATE JOB
-    // ==========================
 
 
     const params =
@@ -184,11 +151,15 @@ module.exports = async function handler(req, res) {
 
 
 
+    console.log(
+      "CREATE JOB"
+    );
+
+
     const job =
       new ExportPDFJob({
 
         inputAsset,
-
         params
 
       });
@@ -196,39 +167,28 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "JOB CREATED:",
-      job !== undefined
+      "JOB:",
+      job
     );
 
 
 
-    if (!job) {
-
-      throw new Error(
-        "Adobe ExportPDFJob gagal dibuat"
-      );
-
-    }
-
-
-
-    // ==========================
-    // EXECUTE JOB
-    // ==========================
-
-
     console.log(
-      "Submitting job..."
+      "SUBMIT START"
     );
 
 
     const pollingURL =
-      await pdfServices.submit(job);
+      await pdfServices.submit({
+
+        job
+
+      });
 
 
 
     console.log(
-      "Polling:",
+      "POLLING URL:",
       pollingURL
     );
 
@@ -246,9 +206,10 @@ module.exports = async function handler(req, res) {
 
 
 
-    // ==========================
-    // DOWNLOAD RESULT
-    // ==========================
+    console.log(
+      "JOB FINISHED"
+    );
+
 
 
     const resultAsset =
@@ -256,7 +217,7 @@ module.exports = async function handler(req, res) {
 
 
 
-    const result =
+    const content =
       await pdfServices.getContent({
 
         asset: resultAsset
@@ -268,9 +229,7 @@ module.exports = async function handler(req, res) {
     const output = [];
 
 
-    for await (
-      const chunk of result.readStream
-    ) {
+    for await (const chunk of content.readStream) {
 
       output.push(chunk);
 
@@ -294,9 +253,7 @@ module.exports = async function handler(req, res) {
     );
 
 
-    return res
-      .status(200)
-      .send(finalBuffer);
+    return res.status(200).send(finalBuffer);
 
 
 
@@ -304,19 +261,24 @@ module.exports = async function handler(req, res) {
 
 
     console.error(
-      "ADOBE ERROR:",
+      "FULL ADOBE ERROR:",
       error
     );
 
 
     return res.status(500).json({
 
-      error:
-        error.message ||
-        "Adobe conversion gagal"
+      error: error.message,
+
+      name: error.name,
+
+      details:
+        JSON.stringify(
+          error,
+          Object.getOwnPropertyNames(error)
+        )
 
     });
-
 
   }
 
