@@ -5,7 +5,9 @@ const {
   ExportPDFJob,
   ExportPDFParams,
   ExportPDFTargetFormat,
-  ExportPDFResult
+  ExportPDFResult,
+  CreatePDFJob,
+  CreatePDFResult
 } = require("@adobe/pdfservices-node-sdk");
 
 const Busboy = require("busboy");
@@ -28,6 +30,28 @@ const OUTPUTS = {
     adobeFormat: ExportPDFTargetFormat.PPTX,
     extension: ".pptx",
     mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  },
+  pdf: {
+    extension: ".pdf",
+    mime: "application/pdf"
+  }
+};
+
+const OFFICE_INPUTS = {
+  "word-to-pdf": {
+    mimeType: MimeType.DOCX,
+    label: "Word DOCX",
+    extensions: [".docx"]
+  },
+  "excel-to-pdf": {
+    mimeType: MimeType.XLSX,
+    label: "Excel XLSX",
+    extensions: [".xlsx"]
+  },
+  "ppt-to-pdf": {
+    mimeType: MimeType.PPTX,
+    label: "PowerPoint PPTX",
+    extensions: [".pptx"]
   }
 };
 
@@ -52,18 +76,33 @@ module.exports = async function handler(req, res) {
     }
 
     const upload = await readMultipart(req);
-    const format = normalizeFormat(req.query?.format || upload.fields.format || "docx");
+    const operation = normalizeOperation(
+      req.query?.type || upload.fields.conversionType
+    );
+    const officeInput = OFFICE_INPUTS[operation];
+    const format = officeInput
+      ? "pdf"
+      : normalizeFormat(req.query?.format || upload.fields.format || "docx");
     const outputConfig = OUTPUTS[format];
 
     if (!upload.buffer.length) {
-      throw new Error("PDF tidak terbaca");
+      throw new Error("Berkas tidak terbaca");
     }
 
-    if (upload.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    if (operation === "pdf-export" && upload.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("File yang dikirim bukan PDF yang valid");
     }
 
+    if (officeInput && !isZipOfficeFile(upload.buffer)) {
+      throw new Error(`File ${officeInput.label} tidak valid`);
+    }
+
+    if (officeInput && !hasAllowedExtension(upload.originalName, officeInput.extensions)) {
+      throw new Error(`Format input harus ${officeInput.extensions.join(" atau ")}`);
+    }
+
     console.log("CONVERT START:", {
+      operation,
       format,
       fileSize: upload.buffer.length
     });
@@ -77,23 +116,28 @@ module.exports = async function handler(req, res) {
 
     const inputAsset = await pdfServices.upload({
       readStream: Readable.from(upload.buffer),
-      mimeType: MimeType.PDF
+      mimeType: officeInput ? officeInput.mimeType : MimeType.PDF
     });
 
-    const params = new ExportPDFParams({
-      targetFormat: outputConfig.adobeFormat
-    });
+    let job;
+    let resultType;
 
-    const job = new ExportPDFJob({
-      inputAsset,
-      params
-    });
+    if (officeInput) {
+      job = new CreatePDFJob({ inputAsset });
+      resultType = CreatePDFResult;
+    } else {
+      const params = new ExportPDFParams({
+        targetFormat: outputConfig.adobeFormat
+      });
+      job = new ExportPDFJob({ inputAsset, params });
+      resultType = ExportPDFResult;
+    }
 
     const pollingURL = await pdfServices.submit({ job });
 
     const response = await pdfServices.getJobResult({
       pollingURL,
-      resultType: ExportPDFResult
+      resultType
     });
 
     const resultAsset = response?.result?.asset;
@@ -140,7 +184,7 @@ module.exports = async function handler(req, res) {
 
     const message = error?.message || "Gagal memproses dokumen";
     const status =
-      /format|tidak ditemukan|tidak terbaca|bukan PDF|terlalu besar|multipart/i.test(message)
+      /format|tidak ditemukan|tidak terbaca|bukan PDF|DOCX|XLSX|PPTX|tidak valid|terlalu besar|multipart/i.test(message)
         ? 400
         : 500;
 
@@ -154,6 +198,14 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+function normalizeOperation(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["word-to-pdf", "excel-to-pdf", "ppt-to-pdf"].includes(normalized)) {
+    return normalized;
+  }
+  return "pdf-export";
+}
 
 function normalizeFormat(value) {
   const normalized = String(value || "docx").trim().toLowerCase();
@@ -240,4 +292,13 @@ function createOutputName(originalName, extension) {
     .slice(0, 100);
 
   return `${baseName || "converted"}${extension}`;
+}
+
+function isZipOfficeFile(buffer) {
+  return buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4B;
+}
+
+function hasAllowedExtension(filename, allowedExtensions) {
+  const lowerName = String(filename || "").toLowerCase();
+  return allowedExtensions.some(extension => lowerName.endsWith(extension));
 }
