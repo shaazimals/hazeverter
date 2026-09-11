@@ -302,4 +302,3 @@ function hasAllowedExtension(filename, allowedExtensions) {
   const lowerName = String(filename || "").toLowerCase();
   return allowedExtensions.some(extension => lowerName.endsWith(extension));
 }
-
