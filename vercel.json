@@ -1,14 +1,5 @@
 {
-  "functions": {
-    "api/convert.js": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/convert",
-      "dest": "/api/convert.js"
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
