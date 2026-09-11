@@ -357,6 +357,10 @@
               <div id="tool-options-content" class="space-y-4">
                 <!-- Injected via JS -->
               </div>
+              <button id="process-action-btn" onclick="app.processTool()" type="button" class="mt-4 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
+                <span id="process-btn-text">Mulai Proses Dokumen</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
             </div>
 
           </div>
@@ -600,6 +604,11 @@
         document.getElementById('dropzone-btn-text').textContent = config.btnLabel;
         document.getElementById('add-more-label').textContent = config.btnLabel;
         document.getElementById('dropzone-icon').className = `fa-solid ${config.icon} text-4xl`;
+        document.getElementById('process-btn-text').textContent = config.btnText;
+
+        const actionBtn = document.getElementById('process-action-btn');
+        actionBtn.className = `mt-4 w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95 ${config.btnBg}`;
+
         document.getElementById('main-file-input').accept = config.accept;
         document.getElementById('additional-file-input').accept = config.accept;
 
@@ -826,10 +835,6 @@
                 <input type="text" id="opt-ba-filename" value="${defaultFilename}" class="w-full text-xs p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-emerald-600 outline-none">
               </div>
 
-              <button onclick="app.processTool()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
-                <span>${this.toolConfig[tool].btnText}</span>
-                <i class="fa-solid fa-arrow-right"></i>
-              </button>
             </div>
           `;
         } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(tool)) {
@@ -842,23 +847,10 @@
               <p class="text-slate-600 leading-relaxed">
                 Dokumen diproses secara presisi menggunakan API resmi Adobe via server Vercel Cloud.
               </p>
-              <button onclick="app.processTool()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
-                <span>Eksekusi Konversi Cloud</span>
-                <i class="fa-solid fa-arrow-right"></i>
-              </button>
             </div>
           `;
         } else {
-          const config = this.toolConfig[tool];
-          optionsContainer.innerHTML = `
-            <div class="space-y-4">
-              <p class="text-xs text-slate-500">Pengaturan optimasi standar telah diterapkan.</p>
-              <button onclick="app.processTool()" type="button" class="w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95 ${config?.btnBg || 'bg-indigo-600 hover:bg-indigo-700'}">
-                <span>${config?.btnText || 'Mulai Proses Dokumen →'}</span>
-                <i class="fa-solid fa-arrow-right"></i>
-              </button>
-            </div>
-          `;
+          optionsContainer.innerHTML = `<p class="text-xs text-slate-500">Pengaturan optimasi standar telah diterapkan.</p>`;
         }
       }
 
