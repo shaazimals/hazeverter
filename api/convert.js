@@ -54,32 +54,44 @@ module.exports = async function handler(req, res) {
     const pdfServices = new PDFServices({ credentials });
     const readStream = Readable.from(fileBuffer);
 
-    let job, ext;
+    let job;
+    const type = (conversionType || '').toLowerCase();
 
-    // 1. PDF ke Office
-    if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt'].includes(conversionType)) {
+    // 1. PDF ke Word (DOCX)
+    if (type.includes('word') || type.includes('docx') || type === 'pdf-to-word') {
       const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
-      
-      let targetFormat = ExportPDFTargetFormat.DOCX;
-      ext = 'docx';
-      if (conversionType === 'pdf-to-excel') { targetFormat = ExportPDFTargetFormat.XLSX; ext = 'xlsx'; }
-      if (conversionType === 'pdf-to-ppt') { targetFormat = ExportPDFTargetFormat.PPTX; ext = 'pptx'; }
-
-      const params = new ExportPDFParams({ targetFormat });
+      const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.DOCX });
       job = new ExportPDFJob({ inputAsset, params });
 
-    // 2. Office ke PDF
-    } else if (['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
-      let mimeType = MimeType.DOCX;
-      if (conversionType === 'excel-to-pdf') mimeType = MimeType.XLSX;
-      if (conversionType === 'ppt-to-pdf') mimeType = MimeType.PPTX;
-      ext = 'pdf';
+    // 2. PDF ke Excel (XLSX)
+    } else if (type.includes('excel') || type.includes('xlsx') || type === 'pdf-to-excel') {
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
+      const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.XLSX });
+      job = new ExportPDFJob({ inputAsset, params });
 
-      const inputAsset = await pdfServices.upload({ readStream, mimeType });
-      const params = new CreatePDFParams({});
-      job = new CreatePDFJob({ inputAsset, params });
+    // 3. PDF ke PowerPoint (PPTX)
+    } else if (type.includes('ppt') || type.includes('pptx') || type === 'pdf-to-ppt') {
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
+      const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.PPTX });
+      job = new ExportPDFJob({ inputAsset, params });
+
+    // 4. Word ke PDF
+    } else if (type === 'word-to-pdf' || type === 'docx-to-pdf') {
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.DOCX });
+      job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
+
+    // 5. Excel ke PDF
+    } else if (type === 'excel-to-pdf' || type === 'xlsx-to-pdf') {
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.XLSX });
+      job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
+
+    // 6. PowerPoint ke PDF
+    } else if (type === 'ppt-to-pdf' || type === 'pptx-to-pdf') {
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PPTX });
+      job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
+
     } else {
-      return res.status(400).json({ error: 'Jenis konversi tidak valid.' });
+      return res.status(400).json({ error: `Tipe konversi '${conversionType}' tidak dikenali oleh server.` });
     }
 
     const pollingURL = await pdfServices.submit(job);
