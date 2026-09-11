@@ -22,97 +22,68 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== "POST") {
     return res.status(405).json({
-      error:"Method not allowed"
+      error: "Method not allowed"
     });
   }
 
 
   try {
 
-
     const clientId =
       process.env.ADOBE_CLIENT_ID?.trim();
-
 
     const clientSecret =
       process.env.ADOBE_CLIENT_SECRET?.trim();
 
 
-
-    if(!clientId || !clientSecret){
-
+    if (!clientId || !clientSecret) {
       throw new Error(
-        "Adobe ENV tidak ditemukan"
+        "Adobe credential tidak ditemukan"
       );
-
     }
 
 
+    const fileBuffer = await new Promise((resolve, reject) => {
 
-    const fileBuffer =
-      await new Promise((resolve,reject)=>{
-
-
-        const busboy =
-          Busboy({
-            headers:req.headers
-          });
+      const busboy = Busboy({
+        headers: req.headers
+      });
 
 
-        let chunks=[];
+      const chunks = [];
 
 
-        busboy.on(
-          "file",
-          (field,file)=>{
+      busboy.on("file", (name, file) => {
 
-
-            file.on(
-              "data",
-              chunk=>{
-                chunks.push(chunk);
-              }
-            );
-
-
-          }
-        );
-
-
-        busboy.on(
-          "finish",
-          ()=>{
-
-            resolve(
-              Buffer.concat(chunks)
-            );
-
-          }
-        );
-
-
-        busboy.on(
-          "error",
-          reject
-        );
-
-
-        req.pipe(busboy);
-
+        file.on("data", chunk => {
+          chunks.push(chunk);
+        });
 
       });
 
 
+      busboy.on("finish", () => {
 
-    if(
-      !fileBuffer ||
-      fileBuffer.length === 0
-    ){
+        resolve(
+          Buffer.concat(chunks)
+        );
 
+      });
+
+
+      busboy.on("error", reject);
+
+
+      req.pipe(busboy);
+
+    });
+
+
+
+    if (!fileBuffer || fileBuffer.length === 0) {
       throw new Error(
-        "PDF kosong"
+        "File PDF tidak ditemukan"
       );
-
     }
 
 
@@ -126,31 +97,25 @@ module.exports = async function handler(req, res) {
 
     const credentials =
       new ServicePrincipalCredentials({
-
         clientId,
-
         clientSecret
-
       });
 
 
 
     const pdfServices =
       new PDFServices({
-
         credentials
-
       });
 
 
 
     console.log(
-      "Uploading PDF..."
+      "UPLOAD PDF"
     );
 
 
-
-    const asset =
+    const inputAsset =
       await pdfServices.upload({
 
         readStream:
@@ -164,9 +129,8 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "Creating Adobe Job..."
+      "CREATE PARAM"
     );
-
 
 
     const params =
@@ -179,22 +143,39 @@ module.exports = async function handler(req, res) {
 
 
 
+    console.log(
+      "CREATE JOB"
+    );
+
+
     const job =
       new ExportPDFJob({
 
-        inputAsset: asset,
+        inputAsset: inputAsset,
 
-        params
+        params: params
 
       });
 
 
 
     console.log(
-      "JOB:",
-      job ? "OK" : "FAILED"
+      "JOB CREATED:",
+      !!job
     );
 
+
+    if (!job) {
+      throw new Error(
+        "Adobe job gagal dibuat"
+      );
+    }
+
+
+
+    console.log(
+      "SUBMIT JOB"
+    );
 
 
     const pollingURL =
@@ -203,7 +184,7 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "POLLING:",
+      "POLLING URL:",
       pollingURL
     );
 
@@ -221,31 +202,30 @@ module.exports = async function handler(req, res) {
 
 
 
+    const resultAsset =
+      result.result.asset;
+
+
+
     const content =
       await pdfServices.getContent({
 
-        asset:
-          result.result.asset
+        asset: resultAsset
 
       });
 
 
 
-    const chunks=[];
+    const buffers = [];
 
 
-    for await(
-      const chunk of content.readStream
-    ){
-
-      chunks.push(chunk);
-
+    for await (const chunk of content.readStream) {
+      buffers.push(chunk);
     }
 
 
-
-    const output =
-      Buffer.concat(chunks);
+    const finalBuffer =
+      Buffer.concat(buffers);
 
 
 
@@ -257,27 +237,28 @@ module.exports = async function handler(req, res) {
 
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=result.docx"
+      "attachment; filename=converted.docx"
     );
 
 
-    return res.status(200).send(output);
+    return res.status(200).send(finalBuffer);
 
 
 
-  } catch(err){
+  } catch(error) {
 
 
     console.error(
-      "FULL ERROR:",
-      err
+      "ADOBE FULL ERROR:",
+      error
     );
 
 
     return res.status(500).json({
 
       error:
-        err.message
+        error.message ||
+        "Adobe conversion gagal"
 
     });
 
