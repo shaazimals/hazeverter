@@ -13,24 +13,17 @@ const fs = require('fs');
 const path = require('path');
 const formidable = require('formidable');
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 1. Ambil Environment Variables
   const clientId = (process.env.ADOBE_CLIENT_ID || '').trim();
   const clientSecret = (process.env.ADOBE_CLIENT_SECRET || '').trim();
 
   if (!clientId || !clientSecret) {
     return res.status(500).json({ 
-      error: 'Environment Variable Hilang: ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET tidak terdeteksi di Vercel.' 
+      error: 'Environment Variable Hilang: ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dipasang di Vercel.' 
     });
   }
 
@@ -41,8 +34,7 @@ export default async function handler(req, res) {
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error('Formidable Error:', err);
-      return res.status(500).json({ error: 'Gagal membaca berkas unggahan: ' + err.message });
+      return res.status(500).json({ error: 'Gagal membaca unggahan: ' + err.message });
     }
 
     try {
@@ -56,7 +48,6 @@ export default async function handler(req, res) {
       const inputFilePath = uploadedFile.filepath;
       let outputFilePath = path.join('/tmp', `converted_${Date.now()}`);
 
-      // 2. Inisialisasi Adobe Service Principal Credentials
       const credentials = new ServicePrincipalCredentials({
         clientId: clientId,
         clientSecret: clientSecret,
@@ -65,7 +56,7 @@ export default async function handler(req, res) {
       const pdfServices = new PDFServices({ credentials });
       const readStream = fs.createReadStream(inputFilePath);
 
-      // 3. Proses Konversi PDF ke Office (Word/Excel/PPT)
+      // Konversi PDF ke Office
       if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt'].includes(conversionType)) {
         const inputAsset = await pdfServices.upload({
           readStream,
@@ -98,7 +89,7 @@ export default async function handler(req, res) {
           streamAsset.readStream.on('error', reject);
         });
 
-      // 4. Proses Konversi Office (Word/Excel/PPT) ke PDF
+      // Konversi Office ke PDF
       } else if (['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
         let mimeType = MimeType.DOCX;
         if (conversionType === 'excel-to-pdf') mimeType = MimeType.XLSX;
@@ -126,13 +117,11 @@ export default async function handler(req, res) {
           streamAsset.readStream.on('error', reject);
         });
       } else {
-        return res.status(400).json({ error: 'Tipe konversi tidak valid: ' + conversionType });
+        return res.status(400).json({ error: 'Jenis konversi tidak dikenal: ' + conversionType });
       }
 
-      // 5. Kirimkan Hasil Berkas ke Client
       const fileBuffer = fs.readFileSync(outputFilePath);
 
-      // Cleanup berkas sementara di /tmp
       try {
         if (fs.existsSync(inputFilePath)) fs.unlinkSync(inputFilePath);
         if (fs.existsSync(outputFilePath)) fs.unlinkSync(outputFilePath);
@@ -142,9 +131,8 @@ export default async function handler(req, res) {
       return res.status(200).send(fileBuffer);
 
     } catch (error) {
-      console.error('Adobe API Runtime Failure:', error);
-      const errorMsg = error.message || 'Gagal mengeksekusi konversi pada Adobe API.';
-      return res.status(500).json({ error: `[Adobe API Error]: ${errorMsg}` });
+      console.error('Runtime Failure:', error);
+      return res.status(500).json({ error: `[Adobe SDK Detail]: ${error.message}` });
     }
   });
-}
+};
