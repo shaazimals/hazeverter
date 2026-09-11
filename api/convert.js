@@ -13,12 +13,6 @@ const fs = require('fs');
 const path = require('path');
 const formidable = require('formidable');
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -29,19 +23,20 @@ module.exports = async function handler(req, res) {
 
   if (!clientId || !clientSecret) {
     return res.status(500).json({ 
-      error: 'Environment Variable ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dikonfigurasi di Vercel.' 
+      error: 'Environment Variable ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dipasang di Vercel.' 
     });
   }
 
   const form = formidable({
     multiples: false,
+    uploadDir: '/tmp',
     keepExtensions: true,
   });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
       console.error('Formidable Error:', err);
-      return res.status(500).json({ error: 'Gagal membaca unggahan: ' + err.message });
+      return res.status(500).json({ error: 'Gagal membaca unggahan berkas: ' + err.message });
     }
 
     try {
@@ -65,7 +60,7 @@ module.exports = async function handler(req, res) {
       const pdfServices = new PDFServices({ credentials });
       const readStream = fs.createReadStream(inputFilePath);
 
-      // 1. PDF ke Office
+      // 1. Konversi PDF ke Office
       if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt'].includes(conversionType)) {
         const inputAsset = await pdfServices.upload({
           readStream,
@@ -98,7 +93,7 @@ module.exports = async function handler(req, res) {
           streamAsset.readStream.on('error', reject);
         });
 
-      // 2. Office ke PDF
+      // 2. Konversi Office ke PDF
       } else if (['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
         let mimeType = MimeType.DOCX;
         if (conversionType === 'excel-to-pdf') mimeType = MimeType.XLSX;
@@ -131,7 +126,6 @@ module.exports = async function handler(req, res) {
 
       const fileBuffer = fs.readFileSync(outputFilePath);
 
-      // Hapus file temporary
       try {
         if (fs.existsSync(inputFilePath)) fs.unlinkSync(inputFilePath);
         if (fs.existsSync(outputFilePath)) fs.unlinkSync(outputFilePath);
@@ -141,8 +135,8 @@ module.exports = async function handler(req, res) {
       return res.status(200).send(fileBuffer);
 
     } catch (error) {
-      console.error('Adobe Runtime Error:', error);
-      return res.status(500).json({ error: error.message || 'Gagal memproses file pada Adobe SDK.' });
+      console.error('Adobe Error Detail:', error);
+      return res.status(500).json({ error: 'Gagal diproses Adobe SDK: ' + (error.message || error) });
     }
   });
 };
