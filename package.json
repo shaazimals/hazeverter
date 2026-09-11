@@ -1,9 +1,10 @@
 {
+  "name": "hazeverter",
+  "version": "1.0.0",
+  "description": "Hazeverter Document Engine",
+  "main": "api/convert.js",
   "dependencies": {
     "@adobe/pdfservices-node-sdk": "^4.1.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "multer": "^2.3.0"
+    "formidable": "^3.5.1"
   }
 }
