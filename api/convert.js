@@ -13,6 +13,24 @@ const { Readable } = require("stream");
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
+const OUTPUTS = {
+  docx: {
+    adobeFormat: ExportPDFTargetFormat.DOCX,
+    extension: ".docx",
+    mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  },
+  xlsx: {
+    adobeFormat: ExportPDFTargetFormat.XLSX,
+    extension: ".xlsx",
+    mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  },
+  pptx: {
+    adobeFormat: ExportPDFTargetFormat.PPTX,
+    extension: ".pptx",
+    mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  }
+};
+
 module.exports.config = {
   api: {
     bodyParser: false
@@ -33,18 +51,22 @@ module.exports = async function handler(req, res) {
       throw new Error("Adobe credential tidak ditemukan");
     }
 
-    const { buffer: fileBuffer, originalName } = await readUploadedPdf(req);
+    const upload = await readMultipart(req);
+    const format = normalizeFormat(req.query?.format || upload.fields.format || "docx");
+    const outputConfig = OUTPUTS[format];
 
-    if (!fileBuffer.length) {
+    if (!upload.buffer.length) {
       throw new Error("PDF tidak terbaca");
     }
 
-    // Validasi signature PDF, bukan hanya ekstensi atau MIME dari browser.
-    if (fileBuffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    if (upload.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("File yang dikirim bukan PDF yang valid");
     }
 
-    console.log("PDF TO EXCEL - FILE SIZE:", fileBuffer.length);
+    console.log("CONVERT START:", {
+      format,
+      fileSize: upload.buffer.length
+    });
 
     const credentials = new ServicePrincipalCredentials({
       clientId,
@@ -53,15 +75,13 @@ module.exports = async function handler(req, res) {
 
     const pdfServices = new PDFServices({ credentials });
 
-    console.log("PDF TO EXCEL - UPLOAD START");
     const inputAsset = await pdfServices.upload({
-      readStream: Readable.from(fileBuffer),
+      readStream: Readable.from(upload.buffer),
       mimeType: MimeType.PDF
     });
-    console.log("PDF TO EXCEL - UPLOAD SUCCESS");
 
     const params = new ExportPDFParams({
-      targetFormat: ExportPDFTargetFormat.XLSX
+      targetFormat: outputConfig.adobeFormat
     });
 
     const job = new ExportPDFJob({
@@ -69,7 +89,6 @@ module.exports = async function handler(req, res) {
       params
     });
 
-    console.log("PDF TO EXCEL - SUBMIT START");
     const pollingURL = await pdfServices.submit({ job });
 
     const response = await pdfServices.getJobResult({
@@ -79,33 +98,30 @@ module.exports = async function handler(req, res) {
 
     const resultAsset = response?.result?.asset;
     if (!resultAsset) {
-      throw new Error("Adobe tidak mengembalikan file Excel hasil konversi");
+      throw new Error(`Adobe tidak mengembalikan file ${format.toUpperCase()}`);
     }
 
-    const content = await pdfServices.getContent({
-      asset: resultAsset
-    });
-
+    const content = await pdfServices.getContent({ asset: resultAsset });
     if (!content?.readStream) {
-      throw new Error("Stream file Excel dari Adobe tidak tersedia");
+      throw new Error(`Stream hasil ${format.toUpperCase()} tidak tersedia`);
     }
 
-    const outputChunks = [];
+    const chunks = [];
     for await (const chunk of content.readStream) {
-      outputChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
 
-    const finalBuffer = Buffer.concat(outputChunks);
+    const finalBuffer = Buffer.concat(chunks);
     if (!finalBuffer.length) {
-      throw new Error("File Excel hasil konversi kosong");
+      throw new Error(`File ${format.toUpperCase()} hasil konversi kosong`);
     }
 
-    const outputName = createOutputName(originalName);
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    const outputName = createOutputName(
+      upload.originalName,
+      outputConfig.extension
     );
+
+    res.setHeader("Content-Type", outputConfig.mime);
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${outputName}"`
@@ -113,14 +129,18 @@ module.exports = async function handler(req, res) {
     res.setHeader("Content-Length", finalBuffer.length);
     res.setHeader("Cache-Control", "no-store");
 
-    console.log("PDF TO EXCEL - SUCCESS:", finalBuffer.length);
+    console.log("CONVERT SUCCESS:", {
+      format,
+      outputSize: finalBuffer.length
+    });
+
     return res.status(200).send(finalBuffer);
   } catch (error) {
-    console.error("FULL PDF TO EXCEL ERROR:", error);
+    console.error("FULL CONVERT ERROR:", error);
 
-    const message = error?.message || "Gagal mengubah PDF menjadi Excel";
+    const message = error?.message || "Gagal memproses dokumen";
     const status =
-      /tidak ditemukan|tidak terbaca|bukan PDF|terlalu besar|multipart/i.test(message)
+      /format|tidak ditemukan|tidak terbaca|bukan PDF|terlalu besar|multipart/i.test(message)
         ? 400
         : 500;
 
@@ -135,7 +155,17 @@ module.exports = async function handler(req, res) {
   }
 };
 
-function readUploadedPdf(req) {
+function normalizeFormat(value) {
+  const normalized = String(value || "docx").trim().toLowerCase();
+
+  if (["docx", "word"].includes(normalized)) return "docx";
+  if (["xlsx", "excel"].includes(normalized)) return "xlsx";
+  if (["pptx", "ppt", "powerpoint"].includes(normalized)) return "pptx";
+
+  throw new Error("Format output tidak didukung. Gunakan docx, xlsx, atau pptx");
+}
+
+function readMultipart(req) {
   return new Promise((resolve, reject) => {
     let busboy;
 
@@ -144,7 +174,8 @@ function readUploadedPdf(req) {
         headers: req.headers,
         limits: {
           files: 1,
-          fileSize: MAX_FILE_SIZE
+          fileSize: MAX_FILE_SIZE,
+          fields: 10
         }
       });
     } catch (error) {
@@ -153,9 +184,14 @@ function readUploadedPdf(req) {
     }
 
     const chunks = [];
+    const fields = {};
     let fileFound = false;
     let originalName = "converted.pdf";
     let tooLarge = false;
+
+    busboy.on("field", (name, value) => {
+      fields[name] = value;
+    });
 
     busboy.on("file", (_fieldName, file, info) => {
       if (fileFound) {
@@ -173,10 +209,6 @@ function readUploadedPdf(req) {
       file.on("error", reject);
     });
 
-    busboy.on("filesLimit", () => {
-      console.warn("Lebih dari satu file dikirim; hanya file pertama diproses");
-    });
-
     busboy.on("finish", () => {
       if (!fileFound) {
         reject(new Error("File PDF tidak ditemukan pada request multipart"));
@@ -190,7 +222,8 @@ function readUploadedPdf(req) {
 
       resolve({
         buffer: Buffer.concat(chunks),
-        originalName
+        originalName,
+        fields
       });
     });
 
@@ -199,12 +232,12 @@ function readUploadedPdf(req) {
   });
 }
 
-function createOutputName(originalName) {
+function createOutputName(originalName, extension) {
   const baseName = String(originalName || "converted")
     .replace(/\.pdf$/i, "")
     .replace(/[^a-zA-Z0-9._-]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 100);
 
-  return `${baseName || "converted"}.xlsx`;
+  return `${baseName || "converted"}${extension}`;
 }
