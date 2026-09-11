@@ -129,7 +129,7 @@
               <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
             </div>
             <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
-              Konversi foto fisik / HEIC menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
+              Konversi foto fisik / HEIC iPhone menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
             </p>
           </div>
           <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
@@ -323,8 +323,8 @@
               </button>
             </div>
 
-            <div id="tab-content-preview">
-              <div id="page-order-hint" class="hidden mb-3 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-[11px] font-semibold text-emerald-700 items-center gap-2">
+            <div id="tab-content-preview" class="flex flex-col">
+              <div id="page-order-hint" class="hidden w-full shrink-0 mb-3 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-[11px] font-semibold text-emerald-700 items-center gap-2">
                 <i class="fa-solid fa-grip-vertical"></i>
                 Klik-tahan lalu geser kartu untuk mengubah urutan halaman PDF.
               </div>
@@ -473,6 +473,7 @@
         this.scanMode = 'color';
         this.detectedBaNumber = '';
         this.draggedPageIndex = null;
+        this.ocrRequestToken = 0;
 
         this.toolConfig = {
           'ocr-ba': {
@@ -674,8 +675,20 @@
         }
       }
 
+      async waitForOCREngine(timeoutMs = 15000) {
+        const startedAt = Date.now();
+        while (typeof window.Tesseract === 'undefined') {
+          if (Date.now() - startedAt >= timeoutMs) {
+            throw new Error('OCR Engine gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.');
+          }
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        return window.Tesseract;
+      }
+
       async runOCRForSelectedFile(force = false) {
         const selectedItem = this.files[this.selectedIndex];
+        const selectedPage = this.selectedIndex;
         const textBox = document.getElementById('ocr-extracted-text-box');
         const tag = document.getElementById('ocr-status-tag');
 
@@ -689,34 +702,41 @@
           return;
         }
 
+        const requestToken = ++this.ocrRequestToken;
         if (tag) tag.classList.remove('hidden');
-        if (textBox) textBox.textContent = "Sedang memproses Teks via OCR Engine...";
+        if (textBox) textBox.textContent = `Menyiapkan OCR untuk halaman ${selectedPage + 1}...`;
 
         try {
-          const ret = await Tesseract.recognize(selectedItem.url, 'eng', {
+          const ocrEngine = await this.waitForOCREngine();
+          const ret = await ocrEngine.recognize(selectedItem.file, 'eng', {
             logger: m => {
+              if (requestToken !== this.ocrRequestToken) return;
               if (m.status === 'recognizing text' && textBox) {
                 const pct = Math.round(m.progress * 100);
-                textBox.textContent = `Sedang mengekstrak teks halaman ${this.selectedIndex + 1}... (${pct}%)`;
+                textBox.textContent = `Sedang mengekstrak teks halaman ${selectedPage + 1}... (${pct}%)`;
               }
             }
           });
+
+          if (requestToken !== this.ocrRequestToken) return;
 
           const extractedText = ret.data.text || "Tidak ada teks terdeteksi.";
           selectedItem.ocrText = extractedText;
           if (textBox) textBox.textContent = extractedText;
 
-          const match = extractedText.match(/BA[.\/\s]SMD[.\/\s]\d{4}[.\/\s]\d{2}[.\/\s]\d{3,5}/i);
+          const match = extractedText.match(/BA\s*[.\/\\-]?\s*SMD\s*[.\/\\-]?\s*(\d{4})\s*[.\/\\-]?\s*(\d{2})\s*[.\/\\-]?\s*(\d{3,5})/i);
           if (match) {
-            this.detectedBaNumber = match[0].replace(/[\/\s]/g, '.').toUpperCase();
+            this.detectedBaNumber = `BA.SMD.${match[1]}.${match[2]}.${match[3]}`;
             const filenameInput = document.getElementById('opt-ba-filename');
             if (filenameInput) filenameInput.value = `${this.detectedBaNumber}.pdf`;
           }
         } catch (err) {
           console.error("OCR Error:", err);
-          if (textBox) textBox.textContent = "Gagal memproses OCR pada file ini.";
+          if (requestToken === this.ocrRequestToken && textBox) {
+            textBox.textContent = `OCR gagal: ${err.message || 'file tidak dapat dipindai.'}`;
+          }
         } finally {
-          if (tag) tag.classList.add('hidden');
+          if (requestToken === this.ocrRequestToken && tag) tag.classList.add('hidden');
         }
       }
 
@@ -1015,6 +1035,7 @@
         this.renderFileList();
         this.renderToolOptions(this.currentTool);
         document.getElementById('file-count-badge').textContent = `${this.files.length} Berkas Dipilih`;
+        if (this.currentTool === 'ocr-ba') this.runOCRForSelectedFile();
       }
 
       endPageDrag() {
@@ -1275,7 +1296,7 @@
     let app;
     window.addEventListener('DOMContentLoaded', () => {
       app = new PDFApp();
-      app.selectTool('ocr-ba');
+      app.showHome();
     });
   </script>
 </body>
