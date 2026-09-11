@@ -515,31 +515,31 @@
           'word-to-pdf': {
             title: 'Konversi Word (.docx) ke PDF',
             subtitle: 'Ubah berkas Microsoft Word menjadi dokumen PDF siap cetak via Adobe API',
-            accept: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            accept: '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             icon: 'fa-file-pdf',
             btnText: 'Konversi ke PDF →',
             btnBg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20',
-            desc: 'Tarik & lepas berkas DOC / DOCX di sini',
+            desc: 'Tarik & lepas berkas DOCX di sini',
             btnLabel: 'Pilih Berkas Word'
           },
           'excel-to-pdf': {
             title: 'Konversi Excel (.xlsx) ke PDF',
             subtitle: 'Ubah lembar kerja Microsoft Excel menjadi dokumen PDF via Adobe API',
-            accept: '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            accept: '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             icon: 'fa-file-pdf',
             btnText: 'Konversi ke PDF →',
             btnBg: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20',
-            desc: 'Tarik & lepas berkas XLS / XLSX di sini',
+            desc: 'Tarik & lepas berkas XLSX di sini',
             btnLabel: 'Pilih Berkas Excel'
           },
           'ppt-to-pdf': {
             title: 'Konversi PowerPoint (.pptx) ke PDF',
             subtitle: 'Ubah slide Microsoft PowerPoint menjadi dokumen PDF via Adobe API',
-            accept: '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            accept: '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation',
             icon: 'fa-file-pdf',
             btnText: 'Konversi ke PDF →',
             btnBg: 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/20',
-            desc: 'Tarik & lepas berkas PPT / PPTX di sini',
+            desc: 'Tarik & lepas berkas PPTX di sini',
             btnLabel: 'Pilih Berkas PowerPoint'
           },
           'merge': {
@@ -1083,7 +1083,26 @@
           'pdf-to-ppt': {
             format: 'pptx',
             extension: 'pptx',
-            label: 'PowerPoint'
+            label: 'PowerPoint',
+            resultKind: 'office'
+          },
+          'word-to-pdf': {
+            format: 'pdf',
+            extension: 'pdf',
+            label: 'PDF',
+            resultKind: 'pdf'
+          },
+          'excel-to-pdf': {
+            format: 'pdf',
+            extension: 'pdf',
+            label: 'PDF',
+            resultKind: 'pdf'
+          },
+          'ppt-to-pdf': {
+            format: 'pdf',
+            extension: 'pdf',
+            label: 'PDF',
+            resultKind: 'pdf'
           }
         };
 
@@ -1095,8 +1114,9 @@
         const formData = new FormData();
         formData.append('file', this.files[0].file);
         formData.append('format', config.format);
+        formData.append('conversionType', conversionType);
 
-        const response = await fetch(`/api/convert?format=${encodeURIComponent(config.format)}`, {
+        const response = await fetch(`/api/convert?format=${encodeURIComponent(config.format)}&type=${encodeURIComponent(conversionType)}`, {
           method: 'POST',
           body: formData
         });
@@ -1121,10 +1141,14 @@
           throw new Error(`File ${config.label} hasil konversi kosong.`);
         }
 
-        // DOCX, XLSX, dan PPTX adalah paket Open XML dengan signature ZIP "PK".
-        // Pemeriksaan ini mencegah respons teks/JSON tersimpan sebagai file Office.
-        const signature = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
-        if (signature[0] !== 0x50 || signature[1] !== 0x4B) {
+        const signatureLength = config.resultKind === 'pdf' ? 5 : 2;
+        const signature = new Uint8Array(await blob.slice(0, signatureLength).arrayBuffer());
+        const validOffice = signature[0] === 0x50 && signature[1] === 0x4B;
+        const validPdf = signature[0] === 0x25 && signature[1] === 0x50 &&
+          signature[2] === 0x44 && signature[3] === 0x46 && signature[4] === 0x2D;
+
+        if ((config.resultKind === 'pdf' && !validPdf) ||
+            (config.resultKind !== 'pdf' && !validOffice)) {
           const unexpectedText = await blob.text().catch(() => '');
           throw new Error(
             unexpectedText
