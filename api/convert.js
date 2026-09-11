@@ -4,13 +4,11 @@ const {
   MimeType,
   ExportPDFJob,
   ExportPDFParams,
-  ExportPDFTargetFormat,
-  CreatePDFJob,
-  CreatePDFParams,
+  ExportPDFTargetFormat
 } = require("@adobe/pdfservices-node-sdk");
 
-const { Readable } = require("stream");
 const Busboy = require("busboy");
+const { Readable } = require("stream");
 
 
 module.exports.config = {
@@ -29,22 +27,13 @@ module.exports = async function handler(req, res) {
   }
 
 
-  const clientId = process.env.ADOBE_CLIENT_ID;
-  const clientSecret = process.env.ADOBE_CLIENT_SECRET;
+  const clientId = process.env.ADOBE_CLIENT_ID?.trim();
+  const clientSecret = process.env.ADOBE_CLIENT_SECRET?.trim();
 
 
   if (!clientId || !clientSecret) {
-
-    console.error(
-      "Missing Adobe ENV",
-      {
-        clientId: !!clientId,
-        clientSecret: !!clientSecret
-      }
-    );
-
     return res.status(500).json({
-      error:"Adobe credentials missing"
+      error: "Adobe credentials belum tersedia"
     });
   }
 
@@ -52,7 +41,10 @@ module.exports = async function handler(req, res) {
   try {
 
 
-    const upload = await new Promise((resolve,reject)=>{
+    const {
+      fileBuffer,
+      conversionType
+    } = await new Promise((resolve,reject)=>{
 
 
       const busboy = Busboy({
@@ -60,67 +52,43 @@ module.exports = async function handler(req, res) {
       });
 
 
-      let bufferChunks=[];
-      let conversionType="";
+      let chunks=[];
+      let type="";
+
+
+      busboy.on("file",(name,file)=>{
+
+        file.on("data",(data)=>{
+          chunks.push(data);
+        });
+
+      });
 
 
       busboy.on("field",(name,value)=>{
 
         if(
-          [
-            "conversionType",
-            "type",
-            "format",
-            "action"
-          ].includes(name)
+          name === "conversionType" ||
+          name === "type" ||
+          name === "format"
         ){
-
-          conversionType=value;
-
+          type=value;
         }
 
       });
 
 
-
-      busboy.on("file",(name,file)=>{
-
-
-        file.on("data",(chunk)=>{
-
-          bufferChunks.push(chunk);
-
-        });
-
-
-        file.on("end",()=>{
-
-        });
-
-
-      });
-
-
-
       busboy.on("finish",()=>{
 
-
         resolve({
-
-          fileBuffer:
-          Buffer.concat(bufferChunks),
-
-          conversionType
-
+          fileBuffer:Buffer.concat(chunks),
+          conversionType:type
         });
 
-
       });
-
 
 
       busboy.on("error",reject);
-
 
 
       req.pipe(busboy);
@@ -130,22 +98,10 @@ module.exports = async function handler(req, res) {
 
 
 
-    const {
-      fileBuffer,
-      conversionType
-    } = upload;
-
-
-
-    if(
-      !fileBuffer ||
-      fileBuffer.length===0
-    ){
+    if(!fileBuffer || fileBuffer.length === 0){
 
       return res.status(400).json({
-
-        error:"File kosong"
-
+        error:"File PDF kosong"
       });
 
     }
@@ -161,7 +117,6 @@ module.exports = async function handler(req, res) {
       });
 
 
-
     const pdfServices =
       new PDFServices({
         credentials
@@ -169,109 +124,74 @@ module.exports = async function handler(req, res) {
 
 
 
-    const type =
-      (conversionType || "pdf-to-word")
-      .toLowerCase();
+    const asset =
+      await pdfServices.upload({
 
+        readStream:
+        Readable.from(fileBuffer),
 
-
-    const readStream =
-      Readable.from(fileBuffer);
-
-
-
-    let job;
-    let resultType;
-
-
-
-    /*
-      PDF -> Excel
-    */
-
-    if(
-      type.includes("excel") ||
-      type.includes("xlsx")
-    ){
-
-
-      const asset =
-        await pdfServices.upload({
-
-          readStream,
-          mimeType:MimeType.PDF
-
-        });
-
-
-      job =
-      new ExportPDFJob({
-
-        inputAsset:asset,
-
-        params:
-        new ExportPDFParams({
-
-          targetFormat:
-          ExportPDFTargetFormat.XLSX
-
-        })
+        mimeType:
+        MimeType.PDF
 
       });
 
 
-      resultType =
-      ExportPDFJob.resultType;
 
+    /*
+       Default:
+       PDF -> Word
+    */
+
+
+    let targetFormat =
+      ExportPDFTargetFormat.DOCX;
+
+
+
+    if(
+      conversionType &&
+      conversionType.toLowerCase().includes("excel")
+    ){
+
+      targetFormat =
+      ExportPDFTargetFormat.XLSX;
 
     }
 
 
 
-    /*
-      PDF -> Word
-    */
+    const params =
+      new ExportPDFParams({
 
-    else {
-
-
-      const asset =
-      await pdfServices.upload({
-
-        readStream,
-
-        mimeType:MimeType.PDF
+        targetFormat
 
       });
 
 
 
-      job =
+    const job =
       new ExportPDFJob({
 
         inputAsset:asset,
 
-        params:
-        new ExportPDFParams({
-
-          targetFormat:
-          ExportPDFTargetFormat.DOCX
-
-        })
+        params
 
       });
 
 
-      resultType =
-      ExportPDFJob.resultType;
 
+    if(!job){
+
+      throw new Error(
+        "Adobe job gagal dibuat"
+      );
 
     }
 
 
 
     console.log(
-      "Submitting Adobe Job"
+      "Adobe job created"
     );
 
 
@@ -280,25 +200,19 @@ module.exports = async function handler(req, res) {
 
 
 
-    console.log(
-      "Polling:",
-      pollingURL
-    );
-
-
-
     const response =
       await pdfServices.getJobResult({
 
         pollingURL,
 
-        resultType
+        resultType:
+        ExportPDFJob.resultType
 
       });
 
 
 
-    const asset =
+    const resultAsset =
       response.result.asset;
 
 
@@ -306,34 +220,27 @@ module.exports = async function handler(req, res) {
     const content =
       await pdfServices.getContent({
 
-        asset
+        asset:resultAsset
 
       });
 
 
 
-    const chunks=[];
+    const output=[];
 
 
     for await(
       const chunk of content.readStream
     ){
 
-      chunks.push(chunk);
+      output.push(chunk);
 
     }
 
 
+    const finalBuffer =
+      Buffer.concat(output);
 
-    const output =
-      Buffer.concat(chunks);
-
-
-
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=result.docx"
-    );
 
 
     res.setHeader(
@@ -342,17 +249,22 @@ module.exports = async function handler(req, res) {
     );
 
 
-    return res.status(200).send(output);
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="converted.docx"'
+    );
+
+
+    return res.status(200)
+      .send(finalBuffer);
 
 
 
-  }
-
-  catch(error){
+  } catch(error){
 
 
     console.error(
-      "FULL ADOBE ERROR",
+      "ADOBE ERROR:",
       error
     );
 
@@ -361,11 +273,12 @@ module.exports = async function handler(req, res) {
 
       error:
       error.message ||
-      "Adobe processing failed"
+      "Adobe conversion gagal"
 
     });
 
 
   }
+
 
 };
