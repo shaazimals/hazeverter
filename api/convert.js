@@ -13,6 +13,12 @@ const fs = require('fs');
 const path = require('path');
 const formidable = require('formidable');
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -23,30 +29,33 @@ module.exports = async function handler(req, res) {
 
   if (!clientId || !clientSecret) {
     return res.status(500).json({ 
-      error: 'Environment Variable Hilang: ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dipasang di Vercel.' 
+      error: 'Environment Variable ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dikonfigurasi di Vercel.' 
     });
   }
 
   const form = formidable({
-    uploadDir: '/tmp',
+    multiples: false,
     keepExtensions: true,
   });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
+      console.error('Formidable Error:', err);
       return res.status(500).json({ error: 'Gagal membaca unggahan: ' + err.message });
     }
 
     try {
-      const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
-      const conversionType = Array.isArray(fields.conversionType) ? fields.conversionType[0] : fields.conversionType;
+      const rawFile = files.file;
+      const uploadedFile = Array.isArray(rawFile) ? rawFile[0] : rawFile;
+      const rawType = fields.conversionType;
+      const conversionType = Array.isArray(rawType) ? rawType[0] : rawType;
 
-      if (!uploadedFile || !uploadedFile.filepath) {
+      if (!uploadedFile || (!uploadedFile.filepath && !uploadedFile.path)) {
         return res.status(400).json({ error: 'Tidak ada berkas yang dikirimkan.' });
       }
 
-      const inputFilePath = uploadedFile.filepath;
-      let outputFilePath = path.join('/tmp', `converted_${Date.now()}`);
+      const inputFilePath = uploadedFile.filepath || uploadedFile.path;
+      let outputFilePath = path.join('/tmp', `out_${Date.now()}`);
 
       const credentials = new ServicePrincipalCredentials({
         clientId: clientId,
@@ -56,7 +65,7 @@ module.exports = async function handler(req, res) {
       const pdfServices = new PDFServices({ credentials });
       const readStream = fs.createReadStream(inputFilePath);
 
-      // Konversi PDF ke Office
+      // 1. PDF ke Office
       if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt'].includes(conversionType)) {
         const inputAsset = await pdfServices.upload({
           readStream,
@@ -89,7 +98,7 @@ module.exports = async function handler(req, res) {
           streamAsset.readStream.on('error', reject);
         });
 
-      // Konversi Office ke PDF
+      // 2. Office ke PDF
       } else if (['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
         let mimeType = MimeType.DOCX;
         if (conversionType === 'excel-to-pdf') mimeType = MimeType.XLSX;
@@ -122,6 +131,7 @@ module.exports = async function handler(req, res) {
 
       const fileBuffer = fs.readFileSync(outputFilePath);
 
+      // Hapus file temporary
       try {
         if (fs.existsSync(inputFilePath)) fs.unlinkSync(inputFilePath);
         if (fs.existsSync(outputFilePath)) fs.unlinkSync(outputFilePath);
@@ -131,9 +141,8 @@ module.exports = async function handler(req, res) {
       return res.status(200).send(fileBuffer);
 
     } catch (error) {
-      console.error('Runtime Failure:', error);
-      return res.status(500).json({ error: `[Adobe SDK Detail]: ${error.message}` });
+      console.error('Adobe Runtime Error:', error);
+      return res.status(500).json({ error: error.message || 'Gagal memproses file pada Adobe SDK.' });
     }
   });
 };
-
