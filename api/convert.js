@@ -37,38 +37,55 @@ module.exports = async function handler(req, res) {
 
 
     if (!clientId || !clientSecret) {
+
       throw new Error(
-        "Adobe credential tidak ditemukan"
+        "ADOBE_CLIENT_ID / ADOBE_CLIENT_SECRET belum tersedia"
       );
+
     }
 
 
+
+    // ==========================
+    // READ UPLOADED FILE
+    // ==========================
+
     const fileBuffer = await new Promise((resolve, reject) => {
+
 
       const busboy = Busboy({
         headers: req.headers
       });
 
 
-      const chunks = [];
+      let chunks = [];
 
 
-      busboy.on("file", (name, file) => {
+      busboy.on("file", (fieldname, file) => {
 
-        file.on("data", chunk => {
+
+        file.on("data", (chunk) => {
           chunks.push(chunk);
         });
+
+
+        file.on("error", reject);
+
 
       });
 
 
+
       busboy.on("finish", () => {
+
 
         resolve(
           Buffer.concat(chunks)
         );
 
+
       });
+
 
 
       busboy.on("error", reject);
@@ -76,42 +93,60 @@ module.exports = async function handler(req, res) {
 
       req.pipe(busboy);
 
+
     });
 
 
 
     if (!fileBuffer || fileBuffer.length === 0) {
+
       throw new Error(
-        "File PDF tidak ditemukan"
+        "File PDF tidak terbaca"
       );
+
     }
 
 
 
     console.log(
-      "PDF SIZE:",
+      "PDF RECEIVED:",
       fileBuffer.length
     );
 
 
 
+    // ==========================
+    // ADOBE AUTH
+    // ==========================
+
+
     const credentials =
       new ServicePrincipalCredentials({
+
         clientId,
+
         clientSecret
+
       });
 
 
 
     const pdfServices =
       new PDFServices({
+
         credentials
+
       });
 
 
 
+    // ==========================
+    // UPLOAD PDF
+    // ==========================
+
+
     console.log(
-      "UPLOAD PDF"
+      "Uploading asset..."
     );
 
 
@@ -129,8 +164,14 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "CREATE PARAM"
+      "Asset uploaded"
     );
+
+
+
+    // ==========================
+    // CREATE JOB
+    // ==========================
 
 
     const params =
@@ -143,17 +184,12 @@ module.exports = async function handler(req, res) {
 
 
 
-    console.log(
-      "CREATE JOB"
-    );
-
-
     const job =
       new ExportPDFJob({
 
-        inputAsset: inputAsset,
+        inputAsset,
 
-        params: params
+        params
 
       });
 
@@ -161,20 +197,28 @@ module.exports = async function handler(req, res) {
 
     console.log(
       "JOB CREATED:",
-      !!job
+      job !== undefined
     );
 
 
+
     if (!job) {
+
       throw new Error(
-        "Adobe job gagal dibuat"
+        "Adobe ExportPDFJob gagal dibuat"
       );
+
     }
 
 
 
+    // ==========================
+    // EXECUTE JOB
+    // ==========================
+
+
     console.log(
-      "SUBMIT JOB"
+      "Submitting job..."
     );
 
 
@@ -184,13 +228,13 @@ module.exports = async function handler(req, res) {
 
 
     console.log(
-      "POLLING URL:",
+      "Polling:",
       pollingURL
     );
 
 
 
-    const result =
+    const response =
       await pdfServices.getJobResult({
 
         pollingURL,
@@ -202,12 +246,17 @@ module.exports = async function handler(req, res) {
 
 
 
+    // ==========================
+    // DOWNLOAD RESULT
+    // ==========================
+
+
     const resultAsset =
-      result.result.asset;
+      response.result.asset;
 
 
 
-    const content =
+    const result =
       await pdfServices.getContent({
 
         asset: resultAsset
@@ -216,16 +265,20 @@ module.exports = async function handler(req, res) {
 
 
 
-    const buffers = [];
+    const output = [];
 
 
-    for await (const chunk of content.readStream) {
-      buffers.push(chunk);
+    for await (
+      const chunk of result.readStream
+    ) {
+
+      output.push(chunk);
+
     }
 
 
     const finalBuffer =
-      Buffer.concat(buffers);
+      Buffer.concat(output);
 
 
 
@@ -237,19 +290,21 @@ module.exports = async function handler(req, res) {
 
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=converted.docx"
+      'attachment; filename="converted.docx"'
     );
 
 
-    return res.status(200).send(finalBuffer);
+    return res
+      .status(200)
+      .send(finalBuffer);
 
 
 
-  } catch(error) {
+  } catch (error) {
 
 
     console.error(
-      "ADOBE FULL ERROR:",
+      "ADOBE ERROR:",
       error
     );
 
@@ -261,6 +316,7 @@ module.exports = async function handler(req, res) {
         "Adobe conversion gagal"
 
     });
+
 
   }
 
