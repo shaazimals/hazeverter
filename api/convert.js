@@ -27,13 +27,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 1. Cek Environment Variables
+  // 1. Cek Ketersediaan Environment Variables
   const clientId = process.env.ADOBE_CLIENT_ID;
   const clientSecret = process.env.ADOBE_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     return res.status(500).json({ 
-      error: 'Konfigurasi Server Gagal: ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dipasang di Environment Variables Vercel.' 
+      error: 'Environment Variable Hilang: ADOBE_CLIENT_ID atau ADOBE_CLIENT_SECRET belum dipasang pada settings Vercel.' 
     });
   }
 
@@ -44,31 +44,30 @@ export default async function handler(req, res) {
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      return res.status(500).json({ error: 'Gagal memproses file upload: ' + err.message });
+      return res.status(500).json({ error: 'Gagal memproses unggahan file: ' + err.message });
     }
 
     const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
     const conversionType = Array.isArray(fields.conversionType) ? fields.conversionType[0] : fields.conversionType;
 
     if (!uploadedFile) {
-      return res.status(400).json({ error: 'Tidak ada berkas yang diunggah.' });
+      return res.status(400).json({ error: 'Tidak ada berkas yang diunggah ke server.' });
     }
 
     let inputFilePath = uploadedFile.filepath;
     let outputFilePath = path.join('/tmp', `output_${Date.now()}`);
 
     try {
-      // 2. Inisialisasi Adobe SDK
+      // 2. Inisialisasi Adobe SDK Credentials
       const credentials = new ServicePrincipalCredentials({
         clientId: clientId.trim(),
         clientSecret: clientSecret.trim(),
       });
 
       const pdfServices = new PDFServices({ credentials });
-
       let readStream = fs.createReadStream(inputFilePath);
 
-      // 3. Eksekusi Konversi Sesuai Opsi
+      // 3. Proses Konversi PDF
       if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt'].includes(conversionType)) {
         const inputAsset = await pdfServices.upload({
           readStream,
@@ -127,13 +126,13 @@ export default async function handler(req, res) {
           streamAsset.readStream.on('error', reject);
         });
       } else {
-        return res.status(400).json({ error: 'Tipe konversi tidak dikenali: ' + conversionType });
+        return res.status(400).json({ error: 'Jenis konversi tidak valid: ' + conversionType });
       }
 
-      // 4. Kirim File Hasil Konversi ke Client
+      // 4. Kirim Berkas Hasil Konversi
       const fileBuffer = fs.readFileSync(outputFilePath);
-      
-      // Cleanup temporary files
+
+      // Hapus file temporary
       if (fs.existsSync(inputFilePath)) fs.unlinkSync(inputFilePath);
       if (fs.existsSync(outputFilePath)) fs.unlinkSync(outputFilePath);
 
@@ -142,11 +141,10 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error('Adobe API Runtime Error:', error);
-      
-      // Tangkap Error Spesifik Adobe SDK
-      let detailMessage = error.message || 'Terjadi kesalahan sistem pada Adobe SDK.';
+
+      let detailMessage = error.message || 'Terjadi kesalahan internal pada SDK Adobe.';
       if (error instanceof SDKError || error instanceof ServiceApiError || error instanceof ServiceUsageError) {
-        detailMessage = `[Adobe API Error]: ${error.message} (Status Code: ${error.statusCode || 'Unknown'})`;
+        detailMessage = `[Adobe API Error]: ${error.message} (Status: ${error.statusCode || 'Unknown'})`;
       }
 
       return res.status(500).json({ error: detailMessage });
