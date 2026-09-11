@@ -1069,11 +1069,34 @@
         document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Cloud Engine (${conversionType})...`;
         document.getElementById('processing-progress-bar').style.width = '40%';
 
+        const conversionConfig = {
+          'pdf-to-word': {
+            format: 'docx',
+            extension: 'docx',
+            label: 'Word'
+          },
+          'pdf-to-excel': {
+            format: 'xlsx',
+            extension: 'xlsx',
+            label: 'Excel'
+          },
+          'pdf-to-ppt': {
+            format: 'pptx',
+            extension: 'pptx',
+            label: 'PowerPoint'
+          }
+        };
+
+        const config = conversionConfig[conversionType];
+        if (!config) {
+          throw new Error(`Fungsi ${conversionType} belum terhubung ke endpoint konversi yang sesuai.`);
+        }
+
         const formData = new FormData();
         formData.append('file', this.files[0].file);
-        formData.append('conversionType', conversionType);
+        formData.append('format', config.format);
 
-        const response = await fetch('/api/convert', {
+        const response = await fetch(`/api/convert?format=${encodeURIComponent(config.format)}`, {
           method: 'POST',
           body: formData
         });
@@ -1093,15 +1116,25 @@
 
         document.getElementById('processing-progress-bar').style.width = '90%';
         const blob = await response.blob();
+
+        if (!blob.size) {
+          throw new Error(`File ${config.label} hasil konversi kosong.`);
+        }
+
+        // DOCX, XLSX, dan PPTX adalah paket Open XML dengan signature ZIP "PK".
+        // Pemeriksaan ini mencegah respons teks/JSON tersimpan sebagai file Office.
+        const signature = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
+        if (signature[0] !== 0x50 || signature[1] !== 0x4B) {
+          const unexpectedText = await blob.text().catch(() => '');
+          throw new Error(
+            unexpectedText
+              ? `Server tidak mengirim file ${config.label}: ${unexpectedText.slice(0, 250)}`
+              : `Hasil konversi bukan file ${config.label} yang valid.`
+          );
+        }
         
         const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
-        
-        let ext = 'pdf';
-        if (conversionType === 'pdf-to-word') ext = 'docx';
-        else if (conversionType === 'pdf-to-excel') ext = 'xlsx';
-        else if (conversionType === 'pdf-to-ppt') ext = 'pptx';
-
-        const outputFilename = `${originalName}.${ext}`;
+        const outputFilename = `${originalName}.${config.extension}`;
 
         this.setDownloadResult(blob, outputFilename);
         this.showDownloadScreen();
