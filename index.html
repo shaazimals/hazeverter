@@ -232,37 +232,9 @@
               <h3 class="text-lg font-bold text-slate-900">PowerPoint ke PDF</h3>
               <span class="text-[9px] bg-orange-100 text-orange-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed">Konversi file slide PPT / PPTX menjadi PDF rapi siap cetak atau dibagikan.</p>
+            <p class="text-xs text-slate-500 leading-relaxed">Konversi slide PPT / PPTX menjadi PDF rapi siap cetak atau dibagikan.</p>
           </div>
           <div class="mt-6 text-orange-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- PDF TO JPG -->
-        <div onclick="app.selectTool('pdf-to-jpg')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-              <i class="fa-regular fa-file-image text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">PDF ke JPG</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Ubah lembaran halaman dokumen PDF menjadi berkas gambar resolusi tinggi.</p>
-          </div>
-          <div class="mt-6 text-purple-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- JPG TO PDF -->
-        <div onclick="app.selectTool('img-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-file-pdf text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">JPG / Gambar ke PDF</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan foto JPG, PNG, atau WEBP menjadi satu PDF yang terurut rapi.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </div>
         </div>
@@ -570,26 +542,6 @@
             desc: 'Tarik & lepas berkas PPT / PPTX di sini',
             btnLabel: 'Pilih Berkas PowerPoint'
           },
-          'pdf-to-jpg': {
-            title: 'Ekstraksi PDF ke Gambar JPG',
-            subtitle: 'Ubah lembaran halaman PDF menjadi berkas gambar JPG berkualitas',
-            accept: '.pdf',
-            icon: 'fa-file-image',
-            btnText: 'Ekstrak Jadi Gambar →',
-            btnBg: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20',
-            desc: 'Tarik & lepas berkas PDF di sini',
-            btnLabel: 'Pilih Berkas PDF'
-          },
-          'img-to-pdf': {
-            title: 'Konversi Gambar ke PDF',
-            subtitle: 'Ubah sekumpulan foto galeri menjadi berkas dokumen PDF tunggal',
-            accept: 'image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
-            icon: 'fa-file-pdf',
-            btnText: 'Konversi ke PDF →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas berkas foto di sini',
-            btnLabel: 'Pilih Foto Galeri'
-          },
           'merge': {
             title: 'Penggabung Berkas PDF',
             subtitle: 'Satukan beberapa dokumen PDF sesuai urutan keinginan Anda',
@@ -761,21 +713,6 @@
         }
       }
 
-      moveCard(index, direction) {
-        const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= this.files.length) return;
-        const temp = this.files[index];
-        this.files[index] = this.files[targetIndex];
-        this.files[targetIndex] = temp;
-        
-        this.selectedIndex = targetIndex;
-        this.renderFileList();
-        this.renderToolOptions(this.currentTool);
-        if (this.currentTool === 'ocr-ba') {
-          this.runOCRForSelectedFile();
-        }
-      }
-
       openCropModal(index) {
         this.currentCroppingIndex = index;
         const item = this.files[index];
@@ -900,10 +837,10 @@
                 <span>Adobe PDF Services Cloud Engine</span>
               </div>
               <p class="text-slate-600 leading-relaxed">
-                Dokumen akan dikonversi secara presisi menggunakan API resmi Adobe yang berjalan via serverless cloud Vercel.
+                Dokumen diproses secara presisi menggunakan API resmi Adobe via server Vercel Cloud.
               </p>
               <button onclick="app.processTool()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
-                <span>Jalankan Konversi Cloud</span>
+                <span>Eksekusi Konversi Cloud</span>
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
@@ -1053,7 +990,7 @@
         document.getElementById('view-processing').classList.remove('hidden');
 
         try {
-          if (this.currentTool === 'ocr-ba' || this.currentTool === 'img-to-pdf') {
+          if (this.currentTool === 'ocr-ba') {
             await this.processSmartScanPDF();
           } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool)) {
             await this.processCloudConversion(this.currentTool);
@@ -1064,8 +1001,8 @@
             this.showDownloadScreen();
           }
         } catch (error) {
-          console.error(error);
-          alert('Error: ' + error.message);
+          console.error("Client Process Error:", error);
+          alert('GAGAL PROSES: ' + error.message);
           this.selectTool(this.currentTool);
         }
       }
@@ -1127,7 +1064,7 @@
         this.showDownloadScreen();
       }
 
-      // KONEKSI UTAMA KE BACKEND VERCEL SERVERLESS (/api/convert)
+      // KONEKSI UTAMA KE VERCEL SERVERLESS FUNCTION (/api/convert)
       async processCloudConversion(conversionType) {
         document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Cloud Engine (${conversionType})...`;
         document.getElementById('processing-progress-bar').style.width = '40%';
@@ -1142,8 +1079,16 @@
         });
 
         if (!response.ok) {
-          const errorMsg = await response.json().catch(() => ({}));
-          throw new Error(errorMsg.error || 'Gagal mengonversi dokumen via server Adobe.');
+          // Tangkap pesan error JSON atau Text asli dari server
+          let serverErrorMsg = 'Gagal mengonversi dokumen via server Adobe.';
+          try {
+            const errData = await response.json();
+            if (errData && errData.error) serverErrorMsg = errData.error;
+          } catch (e) {
+            const rawText = await response.text().catch(() => '');
+            if (rawText) serverErrorMsg = `Server Response (${response.status}): ${rawText}`;
+          }
+          throw new Error(serverErrorMsg);
         }
 
         document.getElementById('processing-progress-bar').style.width = '90%';
