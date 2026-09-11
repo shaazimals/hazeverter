@@ -31,7 +31,10 @@ module.exports = async function handler(req, res) {
       let conversionType = '';
 
       busboy.on('field', (fieldname, val) => {
-        if (fieldname === 'conversionType') conversionType = val;
+        // Tangkap nama field dalam berbagai variasi
+        if (['conversionType', 'type', 'format', 'action'].includes(fieldname)) {
+          conversionType = val;
+        }
       });
 
       busboy.on('file', (fieldname, file) => {
@@ -57,41 +60,30 @@ module.exports = async function handler(req, res) {
     let job;
     const type = (conversionType || '').toLowerCase();
 
-    // 1. PDF ke Word (DOCX)
-    if (type.includes('word') || type.includes('docx') || type === 'pdf-to-word') {
-      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
-      const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.DOCX });
-      job = new ExportPDFJob({ inputAsset, params });
-
-    // 2. PDF ke Excel (XLSX)
-    } else if (type.includes('excel') || type.includes('xlsx') || type === 'pdf-to-excel') {
+    // Logika pemilihan Job dengan Fallback bawaan
+    if (type.includes('excel') || type.includes('xlsx') || type.includes('sheet')) {
       const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
       const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.XLSX });
       job = new ExportPDFJob({ inputAsset, params });
 
-    // 3. PDF ke PowerPoint (PPTX)
-    } else if (type.includes('ppt') || type.includes('pptx') || type === 'pdf-to-ppt') {
+    } else if (type.includes('ppt') || type.includes('powerpoint') || type.includes('presentation')) {
       const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
       const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.PPTX });
       job = new ExportPDFJob({ inputAsset, params });
 
-    // 4. Word ke PDF
     } else if (type === 'word-to-pdf' || type === 'docx-to-pdf') {
       const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.DOCX });
       job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
 
-    // 5. Excel ke PDF
     } else if (type === 'excel-to-pdf' || type === 'xlsx-to-pdf') {
       const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.XLSX });
       job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
 
-    // 6. PowerPoint ke PDF
-    } else if (type === 'ppt-to-pdf' || type === 'pptx-to-pdf') {
-      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PPTX });
-      job = new CreatePDFJob({ inputAsset, params: new CreatePDFParams({}) });
-
     } else {
-      return res.status(400).json({ error: `Tipe konversi '${conversionType}' tidak dikenali oleh server.` });
+      // Default Fallback: PDF ke Word (DOCX)
+      const inputAsset = await pdfServices.upload({ readStream, mimeType: MimeType.PDF });
+      const params = new ExportPDFParams({ targetFormat: ExportPDFTargetFormat.DOCX });
+      job = new ExportPDFJob({ inputAsset, params });
     }
 
     const pollingURL = await pdfServices.submit(job);
@@ -114,6 +106,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Adobe Execution Error:', error);
-    return res.status(500).json({ error: 'Gagal diproses server Adobe: ' + error.message });
+    return res.status(500).json({ error: 'Gagal diproses server Adobe: ' + (error.message || error) });
   }
 };
