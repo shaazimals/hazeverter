@@ -17,6 +17,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <script>
     if (typeof pdfjsLib !== 'undefined') {
@@ -132,7 +135,7 @@
               <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
             </div>
             <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
-              Konversi foto fisik / HEIC menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
+              Konversi foto fisik / HEIC iPhone menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
             </p>
           </div>
           <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
@@ -1094,6 +1097,8 @@
           let previewUrl = URL.createObjectURL(f);
           let previewPageCount = null;
           let previewOrientation = null;
+          let contentPreview = null;
+          let contentPreviewLabel = null;
           const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
           if (isPdf && typeof pdfjsLib !== 'undefined') {
             try {
@@ -1112,6 +1117,19 @@
             } catch (error) {
               console.warn('Preview PDF gagal dibuat:', error);
             }
+          } else {
+            try {
+              const officePreview = await this.createOfficePreview(f);
+              if (officePreview) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = officePreview.url;
+                contentPreview = true;
+                contentPreviewLabel = officePreview.label;
+                previewOrientation = officePreview.orientation || 'portrait';
+              }
+            } catch (error) {
+              console.warn('Preview isi Office gagal dibuat:', error);
+            }
           }
 
           this.files.push({
@@ -1122,7 +1140,9 @@
             sizeMb: (f.size / (1024 * 1024)).toFixed(2),
             ocrText: null,
             previewPageCount,
-            previewOrientation
+            previewOrientation,
+            contentPreview,
+            contentPreviewLabel
           });
         }
         
@@ -1139,6 +1159,101 @@
         if (this.currentTool === 'ocr-ba') {
           this.runOCRForSelectedFile();
         }
+      }
+
+      escapePreviewText(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+      }
+
+      wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+        const words = String(text || '').replace(/\s+/g, ' ').trim().split(' ');
+        let line = '';
+        let lineCount = 0;
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (ctx.measureText(test).width > maxWidth && line) {
+            ctx.fillText(line, x, y + lineCount * lineHeight);
+            lineCount += 1;
+            line = word;
+            if (lineCount >= maxLines) break;
+          } else {
+            line = test;
+          }
+        }
+        if (lineCount < maxLines && line) ctx.fillText(line, x, y + lineCount * lineHeight);
+      }
+
+      makeDocumentCanvas(title, accent = '#2563eb', orientation = 'portrait') {
+        const canvas = document.createElement('canvas');
+        canvas.width = orientation === 'landscape' ? 900 : 650;
+        canvas.height = orientation === 'landscape' ? 560 : 920;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = accent;
+        ctx.fillRect(0, 0, canvas.width, 16);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 24px Inter, Arial';
+        ctx.fillText(title, 40, 58);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.moveTo(40, 78); ctx.lineTo(canvas.width - 40, 78); ctx.stroke();
+        return { canvas, ctx };
+      }
+
+      async createOfficePreview(file) {
+        const name = file.name.toLowerCase();
+        const buffer = await file.arrayBuffer();
+
+        if (name.endsWith('.docx') && window.mammoth) {
+          const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
+          const text = result.value.trim() || '(Dokumen tidak memiliki teks yang dapat dipreview)';
+          const { canvas, ctx } = this.makeDocumentCanvas('Preview Word — halaman pertama', '#2563eb', 'portrait');
+          ctx.fillStyle = '#1e293b';
+          ctx.font = '18px Inter, Arial';
+          this.wrapCanvasText(ctx, text, 45, 120, canvas.width - 90, 29, 25);
+          return { url: canvas.toDataURL('image/jpeg', 0.9), label: 'WORD • HALAMAN PERTAMA', orientation: 'portrait' };
+        }
+
+        if (name.endsWith('.xlsx') && window.XLSX) {
+          const workbook = window.XLSX.read(buffer, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, blankrows: false }).slice(0, 18);
+          const { canvas, ctx } = this.makeDocumentCanvas(`Preview Excel — ${sheetName || 'Sheet 1'}`, '#059669', 'landscape');
+          const maxColumns = Math.min(7, Math.max(1, ...rows.map(row => row.length)));
+          const left = 30, top = 100, width = canvas.width - 60, rowHeight = 25, columnWidth = width / maxColumns;
+          ctx.font = '13px Inter, Arial';
+          rows.forEach((row, r) => {
+            for (let c = 0; c < maxColumns; c++) {
+              ctx.fillStyle = r === 0 ? '#d1fae5' : (r % 2 ? '#ffffff' : '#f8fafc');
+              ctx.fillRect(left + c * columnWidth, top + r * rowHeight, columnWidth, rowHeight);
+              ctx.strokeStyle = '#cbd5e1';
+              ctx.strokeRect(left + c * columnWidth, top + r * rowHeight, columnWidth, rowHeight);
+              ctx.fillStyle = '#0f172a';
+              const cell = String(row[c] ?? '');
+              ctx.fillText(cell.length > 16 ? `${cell.slice(0, 15)}…` : cell, left + c * columnWidth + 5, top + r * rowHeight + 17);
+            }
+          });
+          return { url: canvas.toDataURL('image/jpeg', 0.9), label: 'EXCEL • SHEET PERTAMA', orientation: 'landscape' };
+        }
+
+        if (name.endsWith('.pptx') && window.JSZip) {
+          const zip = await window.JSZip.loadAsync(buffer);
+          const slideFile = zip.file('ppt/slides/slide1.xml');
+          if (!slideFile) return null;
+          const xml = await slideFile.async('text');
+          const doc = new DOMParser().parseFromString(xml, 'application/xml');
+          const texts = Array.from(doc.getElementsByTagNameNS('*', 't')).map(node => node.textContent).filter(Boolean);
+          const { canvas, ctx } = this.makeDocumentCanvas('Preview PowerPoint — slide pertama', '#ea580c', 'landscape');
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 30px Inter, Arial';
+          this.wrapCanvasText(ctx, texts[0] || '(Slide tanpa teks)', 55, 145, canvas.width - 110, 38, 3);
+          ctx.fillStyle = '#475569';
+          ctx.font = '20px Inter, Arial';
+          this.wrapCanvasText(ctx, texts.slice(1).join(' • '), 55, 270, canvas.width - 110, 31, 7);
+          return { url: canvas.toDataURL('image/jpeg', 0.9), label: 'POWERPOINT • SLIDE PERTAMA', orientation: 'landscape' };
+        }
+
+        return null;
       }
 
       renderFileList() {
@@ -1188,6 +1303,12 @@
               <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
                 <span class="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.previewPageCount} HALAMAN</span>
                 <img src="${item.url}" class="w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'}">
+              </div>`;
+          } else if (item.contentPreview) {
+            previewHtml = `
+              <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
+                <span class="absolute top-2 left-2 bg-slate-900/90 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.contentPreviewLabel || 'PREVIEW ISI'}</span>
+                <img src="${item.url}" class="w-full h-full object-contain">
               </div>`;
           } else {
             previewHtml = `
