@@ -11,6 +11,8 @@ const {
 const Busboy = require("busboy");
 const { Readable } = require("stream");
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
 module.exports.config = {
   api: {
     bodyParser: false
@@ -31,13 +33,18 @@ module.exports = async function handler(req, res) {
       throw new Error("Adobe credential tidak ditemukan");
     }
 
-    const fileBuffer = await readUploadedPdf(req);
+    const { buffer: fileBuffer, originalName } = await readUploadedPdf(req);
 
     if (!fileBuffer.length) {
       throw new Error("PDF tidak terbaca");
     }
 
-    console.log("FILE SIZE:", fileBuffer.length);
+    // Validasi signature PDF, bukan hanya ekstensi atau MIME dari browser.
+    if (fileBuffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+      throw new Error("File yang dikirim bukan PDF yang valid");
+    }
+
+    console.log("PDF TO EXCEL - FILE SIZE:", fileBuffer.length);
 
     const credentials = new ServicePrincipalCredentials({
       clientId,
@@ -46,15 +53,15 @@ module.exports = async function handler(req, res) {
 
     const pdfServices = new PDFServices({ credentials });
 
-    console.log("UPLOAD START");
+    console.log("PDF TO EXCEL - UPLOAD START");
     const inputAsset = await pdfServices.upload({
       readStream: Readable.from(fileBuffer),
       mimeType: MimeType.PDF
     });
-    console.log("UPLOAD SUCCESS");
+    console.log("PDF TO EXCEL - UPLOAD SUCCESS");
 
     const params = new ExportPDFParams({
-      targetFormat: ExportPDFTargetFormat.DOCX
+      targetFormat: ExportPDFTargetFormat.XLSX
     });
 
     const job = new ExportPDFJob({
@@ -62,12 +69,9 @@ module.exports = async function handler(req, res) {
       params
     });
 
-    console.log("SUBMIT START");
+    console.log("PDF TO EXCEL - SUBMIT START");
     const pollingURL = await pdfServices.submit({ job });
-    console.log("POLLING URL RECEIVED");
 
-    // PENTING: resultType harus memakai ExportPDFResult,
-    // bukan ExportPDFJob.resultType yang nilainya undefined.
     const response = await pdfServices.getJobResult({
       pollingURL,
       resultType: ExportPDFResult
@@ -75,41 +79,53 @@ module.exports = async function handler(req, res) {
 
     const resultAsset = response?.result?.asset;
     if (!resultAsset) {
-      throw new Error("Adobe tidak mengembalikan file DOCX hasil konversi");
+      throw new Error("Adobe tidak mengembalikan file Excel hasil konversi");
     }
-
-    console.log("JOB FINISHED");
 
     const content = await pdfServices.getContent({
       asset: resultAsset
     });
 
-    const output = [];
-    for await (const chunk of content.readStream) {
-      output.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    if (!content?.readStream) {
+      throw new Error("Stream file Excel dari Adobe tidak tersedia");
     }
 
-    const finalBuffer = Buffer.concat(output);
-    if (!finalBuffer.length) {
-      throw new Error("File DOCX hasil konversi kosong");
+    const outputChunks = [];
+    for await (const chunk of content.readStream) {
+      outputChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
+
+    const finalBuffer = Buffer.concat(outputChunks);
+    if (!finalBuffer.length) {
+      throw new Error("File Excel hasil konversi kosong");
+    }
+
+    const outputName = createOutputName(originalName);
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
     res.setHeader(
       "Content-Disposition",
-      'attachment; filename="converted.docx"'
+      `attachment; filename="${outputName}"`
     );
     res.setHeader("Content-Length", finalBuffer.length);
+    res.setHeader("Cache-Control", "no-store");
 
+    console.log("PDF TO EXCEL - SUCCESS:", finalBuffer.length);
     return res.status(200).send(finalBuffer);
   } catch (error) {
-    console.error("FULL ADOBE ERROR:", error);
+    console.error("FULL PDF TO EXCEL ERROR:", error);
 
-    return res.status(500).json({
-      error: error?.message || "Gagal memproses dokumen",
+    const message = error?.message || "Gagal mengubah PDF menjadi Excel";
+    const status =
+      /tidak ditemukan|tidak terbaca|bukan PDF|terlalu besar|multipart/i.test(message)
+        ? 400
+        : 500;
+
+    return res.status(status).json({
+      error: message,
       name: error?.name || "Error",
       details: JSON.stringify(
         error,
@@ -124,7 +140,13 @@ function readUploadedPdf(req) {
     let busboy;
 
     try {
-      busboy = Busboy({ headers: req.headers });
+      busboy = Busboy({
+        headers: req.headers,
+        limits: {
+          files: 1,
+          fileSize: MAX_FILE_SIZE
+        }
+      });
     } catch (error) {
       reject(new Error(`Form upload tidak valid: ${error.message}`));
       return;
@@ -132,22 +154,57 @@ function readUploadedPdf(req) {
 
     const chunks = [];
     let fileFound = false;
+    let originalName = "converted.pdf";
+    let tooLarge = false;
 
-    busboy.on("file", (_fieldName, file) => {
+    busboy.on("file", (_fieldName, file, info) => {
+      if (fileFound) {
+        file.resume();
+        return;
+      }
+
       fileFound = true;
+      originalName = info?.filename || "converted.pdf";
+
       file.on("data", chunk => chunks.push(chunk));
+      file.on("limit", () => {
+        tooLarge = true;
+      });
       file.on("error", reject);
+    });
+
+    busboy.on("filesLimit", () => {
+      console.warn("Lebih dari satu file dikirim; hanya file pertama diproses");
     });
 
     busboy.on("finish", () => {
       if (!fileFound) {
-        reject(new Error("File PDF tidak ditemukan pada request"));
+        reject(new Error("File PDF tidak ditemukan pada request multipart"));
         return;
       }
-      resolve(Buffer.concat(chunks));
+
+      if (tooLarge) {
+        reject(new Error("Ukuran PDF terlalu besar. Maksimal 20 MB"));
+        return;
+      }
+
+      resolve({
+        buffer: Buffer.concat(chunks),
+        originalName
+      });
     });
 
     busboy.on("error", reject);
     req.pipe(busboy);
   });
+}
+
+function createOutputName(originalName) {
+  const baseName = String(originalName || "converted")
+    .replace(/\.pdf$/i, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 100);
+
+  return `${baseName || "converted"}.xlsx`;
 }
