@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hazeverter - Pemrosesan Dokumen & Pemindai Pintar</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+    
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+    .dropzone-dash {
+      background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23059669' stroke-width='3' stroke-dasharray='10%2c 10' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+      border-radius: 16px;
+    }
+    .tool-card { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -6px rgba(5, 150, 105, 0.15); }
+    @keyframes scanLaser {
+      0% { top: 0%; opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { top: 100%; opacity: 0.8; }
+    }
+    .scanner-laser {
+      position: absolute; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #10b981, #34d399, #10b981, transparent);
+      box-shadow: 0 0 15px #10b981, 0 0 5px #34d399;
+      animation: scanLaser 2s infinite ease-in-out alternate;
+    }
+    .scanner-grid {
+      background: linear-gradient(rgba(16, 185, 129, 0.03) 50%, rgba(0, 0, 0, 0.05) 50%);
+      background-size: 100% 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    .filter-grayscale-scan { filter: grayscale(100%) contrast(160%) brightness(105%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="app.showHome()">
+          <div class="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+            <div class="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+              <i class="fa-solid fa-leaf text-lg"></i>
+            </div>
+            <span>Haze<span class="text-brand-600">verter</span></span>
+          </div>
+          <span class="hidden md:inline-block text-[11px] bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-full border border-brand-100 uppercase tracking-wider">ZERO-SERVER ENGINE</span>
+        </div>
+
+        <nav class="hidden lg:flex space-x-4 text-xs font-bold text-slate-700 tracking-wide">
+          <button onclick="app.selectTool('ocr-ba')" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> SMART SCAN & A4 CROPPER</button>
+          <button onclick="app.selectTool('merge')" class="hover:text-brand-600 transition-colors py-2">GABUNG PDF</button>
+          <button onclick="app.selectTool('split')" class="hover:text-brand-600 transition-colors py-2">PISAH HALAMAN</button>
+          <button onclick="app.selectTool('compress')" class="hover:text-brand-600 transition-colors py-2">KOMPRES PDF</button>
+        </nav>
+
+        <div class="flex items-center space-x-3">
+          <button onclick="app.showHome()" class="text-xs font-bold text-slate-600 hover:text-brand-600 flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-slate-50 border border-slate-200 transition-colors">
+            <i class="fa-solid fa-border-all text-brand-600"></i> Beranda Fitur
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow flex flex-col">
+    
+    <!-- HOME VIEW -->
+    <section id="view-home" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          Olah Dokumen Praktis, Cepat & Tanpa Batas
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-slate-600 font-normal leading-relaxed">
+          Platform utilitas PDF terintegrasi berbasis client-side. Mengubah foto/HEIC menjadi PDF A4 presisi, ekstraksi nomor dokumen otomatis, dan edit PDF secara instan tanpa perlu unggah ke server.
+        </p>
+      </div>
+
+      <!-- GRID 10 FITUR LENGKAP -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- 1. FEATURED: SMART SCANNER -->
+        <div onclick="app.selectTool('ocr-ba')" class="tool-card bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl cursor-pointer flex flex-col justify-between group relative overflow-hidden sm:col-span-2">
+          <div class="absolute -right-4 -bottom-4 text-white/5 text-9xl font-extrabold pointer-events-none">A4</div>
+          <div>
+            <div class="w-12 h-12 bg-white/10 backdrop-blur border border-white/20 text-brand-500 rounded-xl flex items-center justify-center mb-4">
+              <i class="fa-solid fa-crop-simple text-2xl text-emerald-400"></i>
+            </div>
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <h3 class="text-2xl font-bold text-white">Smart Scan & Free Crop A4</h3>
+              <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
+            </div>
+            <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
+              Konversi foto fisik / HEIC iPhone menjadi dokumen standar A4 rapi. Dilengkapi *crop* bebas, filter kontras ala pemindai fisik, dan deteksi otomatis nomor BA.
+            </p>
+          </div>
+          <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
+            Buka Pemindai Dokumen <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+
+        <!-- 2. MERGE PDF -->
+        <div onclick="app.selectTool('merge')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-object-group text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Penggabung PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Satukan beberapa berkas PDF menjadi satu dokumen terurut dengan mudah.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 3. SPLIT PDF -->
+        <div onclick="app.selectTool('split')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-scissors text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Pemisah Halaman</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Ekstrak rentang halaman tertentu atau pisahkan setiap lembar menjadi PDF mandiri.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 4. COMPRESS PDF -->
+        <div onclick="app.selectTool('compress')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-compress text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Kompresi PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Pangkas ukuran berkas PDF tanpa mengorbankan keterbacaan teks dan kualitas.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 5. PDF TO JPG -->
+        <div onclick="app.selectTool('pdf-to-jpg')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-regular fa-file-image text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">PDF ke Gambar JPG</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Ubah lembaran halaman dokumen PDF menjadi gambar resolusi tinggi.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 6. IMG TO PDF -->
+        <div onclick="app.selectTool('img-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-pdf text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Gambar ke PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan foto standar JPG, PNG, atau WEBP menjadi satu PDF yang tertata.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 7. PROTECT PDF -->
+        <div onclick="app.selectTool('protect')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-lock text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Proteksi Kata Sandi</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Amankan dokumen sensitif dengan enkripsi *password* tingkat tinggi.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 8. WATERMARK PDF -->
+        <div onclick="app.selectTool('watermark')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-stamp text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Cap Watermark</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Beri stempel teks transparan di atas halaman untuk hak cipta atau status kerahasiaan.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 9. PDF TO WORD (ADOBE API) -->
+        <div onclick="app.selectTool('pdf-to-word')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-word text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">PDF ke Word</h3>
+              <span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Konversi dokumen PDF menjadi berkas Microsoft Word (.docx) yang dapat diedit.</p>
+          </div>
+          <div class="mt-6 text-blue-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- 10. PDF TO EXCEL (ADOBE API) -->
+        <div onclick="app.selectTool('pdf-to-excel')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-excel text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">PDF ke Excel</h3>
+              <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Ekstrak tabel dalam PDF menjadi lembar kerja Microsoft Excel (.xlsx) rapi.</p>
+          </div>
+          <div class="mt-6 text-emerald-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- WORKSPACE VIEW -->
+    <section id="view-workspace" class="hidden flex-grow flex flex-col justify-between relative bg-slate-50">
+      
+      <div class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm flex flex-wrap justify-between items-center gap-4 z-10">
+        <div class="flex items-center space-x-3">
+          <button onclick="app.showHome()" class="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors">
+            <i class="fa-solid fa-arrow-left text-lg"></i>
+          </button>
+          <div>
+            <h2 id="active-tool-title" class="text-xl font-bold text-slate-900">Smart Scan & Free Crop A4</h2>
+            <p id="active-tool-subtitle" class="text-xs text-slate-500">Sesuaikan potongan gambar, standarisasi A4, dan otomatisasi nomor BA</p>
+          </div>
+        </div>
+
+        <div id="workspace-quick-actions" class="hidden items-center space-x-3">
+          <span id="file-count-badge" class="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200">
+            0 Berkas Dipilih
+          </span>
+          <label class="cursor-pointer bg-brand-50 text-brand-700 hover:bg-brand-100 font-semibold text-xs px-3.5 py-2 rounded-lg border border-brand-200 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> <span id="add-more-label">Tambah Berkas</span>
+            <input type="file" id="additional-file-input" class="hidden" multiple accept="image/heic,image/heif,image/jpeg,image/png,image/webp,.heic,.pdf" onchange="app.handleFileSelect(event)">
+          </label>
+        </div>
+      </div>
+
+      <div class="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 relative">
+        
+        <div id="dropzone-container" class="w-full max-w-2xl py-16 px-8 dropzone-dash bg-white text-center flex flex-col items-center justify-center transition-all cursor-pointer hover:border-brand-600 group shadow-sm">
+          <div id="dropzone-icon-box" class="w-20 h-20 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 mb-6 group-hover:scale-110 transition-transform">
+            <i id="dropzone-icon" class="fa-solid fa-expand text-4xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-slate-900 mb-2" id="dropzone-heading">Pilih dokumen yang ingin diolah</h3>
+          <p class="text-sm text-slate-500 mb-8 max-w-md" id="dropzone-desc">Tarik & lepas berkas di sini secara aman</p>
+          
+          <div class="flex flex-wrap justify-center gap-4">
+            <label id="dropzone-btn-label-box" class="cursor-pointer bg-brand-600 hover:bg-brand-700 text-white font-bold text-md px-6 py-3.5 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 active:scale-95">
+              <i class="fa-solid fa-folder-open"></i> <span id="dropzone-btn-text">Pilih Berkas Dokumen</span>
+              <input type="file" id="main-file-input" class="hidden" multiple accept="image/heic,image/heif,image/jpeg,image/png,image/webp,.heic,.pdf" onchange="app.handleFileSelect(event)">
+            </label>
+          </div>
+        </div>
+
+        <div id="preview-container" class="hidden w-full max-w-7xl flex flex-col lg:flex-row gap-6 items-start my-auto">
+          
+          <!-- ANTREAN BERKAS (LEFT PANEL) -->
+          <div class="flex-grow w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col min-h-[500px]">
+            <div class="flex flex-wrap justify-between items-center mb-4 pb-3 border-b border-slate-100 gap-2">
+              <div class="flex items-center gap-3">
+                <h4 class="font-extrabold text-slate-800 text-sm tracking-wider uppercase">ANTREAN BERKAS</h4>
+                <div id="ocr-status-tag" class="hidden text-xs bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-brand-200">
+                  <i class="fa-solid fa-circle-notch animate-spin text-brand-600"></i> Pemindaian OCR Aktif
+                </div>
+              </div>
+              <button onclick="app.clearFiles()" class="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-trash-can"></i> Hapus Semua
+              </button>
+            </div>
+
+            <div id="ocr-preview-tabs" class="hidden flex border-b border-slate-200 mb-6 space-x-6">
+              <button onclick="app.switchPreviewTab('preview')" type="button" id="tab-btn-preview" class="pb-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-image"></i> Susunan Halaman
+              </button>
+              <button onclick="app.switchPreviewTab('ocrtext')" type="button" id="tab-btn-ocrtext" class="pb-2 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-1.5">
+                <i class="fa-solid fa-file-lines"></i> Hasil Deteksi Teks BA
+              </button>
+            </div>
+
+            <div id="tab-content-preview">
+              <div id="file-list-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-6 max-h-[520px] overflow-y-auto custom-scrollbar p-2 w-full">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+
+            <div id="tab-content-ocrtext" class="hidden flex-col gap-3">
+              <div class="flex justify-between items-center bg-slate-100 p-2.5 rounded-xl text-xs font-bold text-slate-700">
+                <span>Ekstraksi Teks (OCR Real-time Engine)</span>
+                <button onclick="app.runOCRForSelectedFile(true)" type="button" class="px-3 py-1 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex items-center gap-1">
+                  <i class="fa-solid fa-rotate-right"></i> Scan Ulang
+                </button>
+              </div>
+              <div class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs font-mono max-h-[380px] overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap select-all" id="ocr-extracted-text-box">
+                Pilih foto pada daftar di atas untuk membaca atau menjalankan ulang scan OCR.
+              </div>
+            </div>
+
+          </div>
+
+          <!-- PENGATURAN & OPSI (RIGHT PANEL) -->
+          <div class="w-full lg:w-96 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between shrink-0">
+            <div>
+              <h4 id="options-panel-title" class="font-bold text-slate-900 text-base mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
+                <span>Pengaturan & Opsi</span>
+                <i class="fa-solid fa-sliders text-slate-400"></i>
+              </h4>
+              <div id="tool-options-content" class="space-y-4">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-100">
+              <button id="process-action-btn" onclick="app.processTool()" type="button" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95">
+                <span id="process-btn-text">Buat Dokumen PDF A4</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FREE CROP MODAL -->
+    <div id="crop-modal" class="fixed inset-0 bg-slate-950/85 z-50 hidden flex flex-col items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-3xl w-full p-6 flex flex-col max-h-[92vh] shadow-2xl relative overflow-hidden">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b">
+          <div>
+            <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+              <i class="fa-solid fa-crop-simple text-brand-600"></i> Potong Area Bebas & Pas A4
+            </h3>
+            <p class="text-xs text-slate-500">Atur batas potong secara manual, sistem akan langsung mempresisikan ke kertas A4</p>
+          </div>
+          <button onclick="app.closeCropModal()" class="text-slate-400 hover:text-slate-700 p-2">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <div id="scanner-view-container" class="flex-grow overflow-hidden bg-slate-950 rounded-xl flex items-center justify-center mb-4 max-h-[58vh] relative scanner-grid">
+          <img id="cropper-image" src="" class="max-h-[55vh] block max-w-full">
+          <div id="modal-laser" class="scanner-laser hidden"></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t">
+          <button onclick="app.triggerModalScanEffect()" type="button" class="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Simulasi Sinar Laser
+          </button>
+          <div class="flex gap-3">
+            <button onclick="app.closeCropModal()" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl">
+              Batal
+            </button>
+            <button onclick="app.applyCrop()" type="button" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-600/20">
+              Simpan & Presisikan ke A4
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW PROCESSING -->
+    <section id="view-processing" class="hidden flex-grow flex flex-col items-center justify-center p-8 bg-slate-950 text-center relative overflow-hidden">
+      <div class="absolute inset-0 scanner-grid opacity-30"></div>
+      
+      <div class="relative mb-8 w-64 h-80 bg-slate-900 border-2 border-brand-500/50 rounded-2xl overflow-hidden flex items-center justify-center shadow-2xl shadow-brand-500/20">
+        <div id="processing-preview-thumb" class="absolute inset-4 bg-contain bg-no-repeat bg-center opacity-60"></div>
+        <div class="scanner-laser"></div>
+        <div class="absolute bottom-3 bg-slate-900/90 backdrop-blur text-brand-300 text-[10px] font-mono px-3 py-1 rounded-full border border-brand-500/30">
+          HAZEVERTER ENGINE WORKING...
+        </div>
+      </div>
+
+      <h3 id="processing-title" class="text-2xl font-bold text-white mb-2">Memproses Dokumen Anda...</h3>
+      <p id="processing-status" class="text-sm text-brand-200 mb-6 max-w-sm">Proses pemindaian & penyelarasan halaman sedang berlangsung...</p>
+
+      <div class="w-full max-w-xs bg-slate-800 rounded-full h-3 overflow-hidden border border-brand-500/30">
+        <div id="processing-progress-bar" class="bg-gradient-to-r from-brand-500 to-emerald-300 h-full w-0 transition-all duration-300"></div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD VIEW -->
+    <section id="view-download" class="hidden flex-grow flex flex-col items-center justify-center p-8 bg-slate-50 text-center">
+      <div class="max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-xl flex flex-col items-center">
+        <div class="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-6 text-3xl shadow-inner border border-brand-100">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 id="success-heading" class="text-2xl font-extrabold text-slate-900 mb-2">Dokumen Selesai Dipproses!</h2>
+        <p id="success-message" class="text-sm text-slate-500 mb-6">Dokumen telah berhasil diolah dan siap untuk diunduh.</p>
+
+        <a id="download-file-link" href="#" download="dokumen.pdf" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-3 text-lg mb-4 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-download"></i>
+          <span id="download-btn-label">Unduh Dokumen</span>
+        </a>
+
+        <button onclick="app.resetState()" type="button" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-colors text-sm">
+          Kembali ke Berkas Utama
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div>
+        © 2026 Hazeverter — Privacy-First Document Utilities & Smart Scanner.
+      </div>
+      <div class="flex space-x-6 text-slate-400 font-medium">
+        <span class="hover:text-brand-600 cursor-pointer">Kebijakan Privasi</span>
+        <span class="hover:text-brand-600 cursor-pointer">Syarat & Ketentuan</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    class PDFApp {
+      constructor() {
+        this.currentTool = 'ocr-ba';
+        this.files = [];
+        this.selectedIndex = 0;
+        this.processedResult = null;
+        this.processedFileName = 'dokumen_hazeverter.pdf';
+        this.activeTab = 'preview';
+        this.cropper = null;
+        this.currentCroppingIndex = null;
+        this.scanMode = 'color';
+        this.detectedBaNumber = '';
+
+        this.toolConfig = {
+          'ocr-ba': {
+            title: 'Smart Scan & Free Crop A4',
+            subtitle: 'Pemindaian pintar, penyesuaian area bebas, dan konversi presisi A4',
+            accept: 'image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
+            icon: 'fa-expand',
+            btnText: 'Buat Dokumen PDF A4 →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas foto dokumen di sini (Mendukung iPhone HEIC & Potong A4)',
+            btnLabel: 'Pilih Foto / HEIC Galeri'
+          },
+          'merge': {
+            title: 'Penggabung Berkas PDF',
+            subtitle: 'Satukan beberapa dokumen PDF sesuai urutan keinginan Anda',
+            accept: '.pdf',
+            icon: 'fa-object-group',
+            btnText: 'Gabungkan PDF Sekarang →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'split': {
+            title: 'Pemisah Halaman PDF',
+            subtitle: 'Pisahkan dokumen menjadi beberapa bagian atau rentang halaman',
+            accept: '.pdf',
+            icon: 'fa-scissors',
+            btnText: 'Pisahkan PDF Sekarang →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin dipisah di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'compress': {
+            title: 'Pengompres Ukuran PDF',
+            subtitle: 'Optimalkan ukuran dokumen agar lebih ringan untuk dikirim',
+            accept: '.pdf',
+            icon: 'fa-compress',
+            btnText: 'Kompres Ukuran PDF →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin dikompresi di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'pdf-to-jpg': {
+            title: 'Ekstraksi PDF ke Gambar JPG',
+            subtitle: 'Ubah lembaran halaman PDF menjadi berkas gambar JPG berkualitas',
+            accept: '.pdf',
+            icon: 'fa-file-image',
+            btnText: 'Ekstrak Jadi Gambar →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'img-to-pdf': {
+            title: 'Konversi Gambar ke PDF',
+            subtitle: 'Ubah sekumpulan foto galeri menjadi berkas dokumen PDF tunggal',
+            accept: 'image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
+            icon: 'fa-file-pdf',
+            btnText: 'Konversi ke PDF →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas foto di sini',
+            btnLabel: 'Pilih Foto Galeri'
+          },
+          'protect': {
+            title: 'Proteksi Dokumen PDF',
+            subtitle: 'Lindungi akses dokumen dengan kata sandi enkripsi privat',
+            accept: '.pdf',
+            icon: 'fa-lock',
+            btnText: 'Pasang Kata Sandi →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin dikunci di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'watermark': {
+            title: 'Penambahan Cap Watermark',
+            subtitle: 'Beri tanda air transparan untuk hak cipta dokumen',
+            accept: '.pdf',
+            icon: 'fa-stamp',
+            btnText: 'Tambahkan Watermark →',
+            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            desc: 'Tarik & lepas berkas PDF di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'pdf-to-word': {
+            title: 'Konversi PDF ke Word (.docx)',
+            subtitle: 'Ubah dokumen PDF menjadi file Microsoft Word yang dapat diedit via Adobe API',
+            accept: '.pdf',
+            icon: 'fa-file-word',
+            btnText: 'Konversi ke Word (.docx) →',
+            btnBg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Word di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          },
+          'pdf-to-excel': {
+            title: 'Konversi PDF ke Excel (.xlsx)',
+            subtitle: 'Ekstrak tabel dalam PDF menjadi lembar kerja Microsoft Excel via Adobe API',
+            accept: '.pdf',
+            icon: 'fa-file-excel',
+            btnText: 'Konversi ke Excel (.xlsx) →',
+            btnBg: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Excel di sini',
+            btnLabel: 'Pilih Berkas PDF'
+          }
+        };
+
+        this.initDragAndDrop();
+      }
+
+      initDragAndDrop() {
+        const dropzone = document.getElementById('dropzone-container');
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.add('border-brand-500', 'bg-brand-50');
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.remove('border-brand-500', 'bg-brand-50');
+          }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+          if (files && files.length > 0) this.handleFileList(Array.from(files));
+        });
+      }
+
+      showHome() {
+        document.getElementById('view-home').classList.remove('hidden');
+        document.getElementById('view-workspace').classList.add('hidden');
+        document.getElementById('view-processing').classList.add('hidden');
+        document.getElementById('view-download').classList.add('hidden');
+        this.clearFiles();
+      }
+
+      selectTool(toolKey) {
+        this.currentTool = toolKey;
+        const config = this.toolConfig[toolKey];
+        if (!config) return;
+
+        document.getElementById('active-tool-title').textContent = config.title;
+        document.getElementById('active-tool-subtitle').textContent = config.subtitle;
+        document.getElementById('dropzone-heading').textContent = `Pilih Berkas ${config.title}`;
+        document.getElementById('dropzone-desc').textContent = config.desc;
+        document.getElementById('dropzone-btn-text').textContent = config.btnLabel;
+        document.getElementById('add-more-label').textContent = config.btnLabel;
+        document.getElementById('dropzone-icon').className = `fa-solid ${config.icon} text-4xl`;
+        document.getElementById('process-btn-text').textContent = config.btnText;
+
+        const actionBtn = document.getElementById('process-action-btn');
+        actionBtn.className = `w-full text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base active:scale-95 ${config.btnBg}`;
+
+        document.getElementById('main-file-input').accept = config.accept;
+        document.getElementById('additional-file-input').accept = config.accept;
+
+        this.renderToolOptions(toolKey);
+
+        if (toolKey === 'ocr-ba') {
+          document.getElementById('ocr-preview-tabs').classList.remove('hidden');
+          document.getElementById('ocr-preview-tabs').classList.add('flex');
+        } else {
+          document.getElementById('ocr-preview-tabs').classList.add('hidden');
+          document.getElementById('ocr-preview-tabs').classList.remove('flex');
+          this.switchPreviewTab('preview');
+        }
+
+        document.getElementById('view-home').classList.add('hidden');
+        document.getElementById('view-workspace').classList.remove('hidden');
+        document.getElementById('view-processing').classList.add('hidden');
+        document.getElementById('view-download').classList.add('hidden');
+
+        if (this.files.length === 0) {
+          document.getElementById('dropzone-container').classList.remove('hidden');
+          document.getElementById('preview-container').classList.add('hidden');
+          document.getElementById('workspace-quick-actions').classList.add('hidden');
+        }
+      }
+
+      async handleFileSelect(event) {
+        const rawFiles = Array.from(event.target.files);
+        if (rawFiles.length === 0) return;
+        await this.handleFileList(rawFiles);
+        event.target.value = '';
+      }
+
+      async handleFileList(rawFiles) {
+        let processedFiles = [];
+        for (let f of rawFiles) {
+          let fileToProcess = f;
+          const isHeic = f.type === 'image/heic' || f.type === 'image/heif' || f.name.toLowerCase().endsWith('.heic');
+          if (isHeic && typeof heic2any !== 'undefined') {
+            try {
+              const convertedBlob = await heic2any({ blob: f, toType: 'image/jpeg', quality: 0.9 });
+              const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+              fileToProcess = new File([blobArray], f.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+            } catch (e) {
+              console.warn("Gagal konversi HEIC:", e);
+            }
+          }
+          processedFiles.push(fileToProcess);
+        }
+        await this.addFiles(processedFiles);
+      }
+
+      selectCard(index) {
+        this.selectedIndex = index;
+        this.renderFileList();
+        this.renderToolOptions(this.currentTool);
+        if (this.currentTool === 'ocr-ba') {
+          this.runOCRForSelectedFile();
+        }
+      }
+
+      async runOCRForSelectedFile(force = false) {
+        const selectedItem = this.files[this.selectedIndex];
+        const textBox = document.getElementById('ocr-extracted-text-box');
+        const tag = document.getElementById('ocr-status-tag');
+
+        if (!selectedItem || !selectedItem.file.type.startsWith('image/')) {
+          if (textBox) textBox.textContent = "Berkas ini bukan gambar yang dapat di-scan OCR.";
+          return;
+        }
+
+        if (selectedItem.ocrText && !force) {
+          if (textBox) textBox.textContent = selectedItem.ocrText;
+          return;
+        }
+
+        if (tag) tag.classList.remove('hidden');
+        if (textBox) textBox.textContent = "Sedang memproses Teks via OCR Engine...";
+
+        try {
+          const ret = await Tesseract.recognize(selectedItem.url, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text' && textBox) {
+                const pct = Math.round(m.progress * 100);
+                textBox.textContent = `Sedang mengekstrak teks halaman ${this.selectedIndex + 1}... (${pct}%)`;
+              }
+            }
+          });
+
+          const extractedText = ret.data.text || "Tidak ada teks terdeteksi.";
+          selectedItem.ocrText = extractedText;
+          if (textBox) textBox.textContent = extractedText;
+
+          // REGEX KHUSUS FORMAT: BA.SMD.TAHUN.BULAN.NOMOR_BA ATAU BA/SMD/...
+          const match = extractedText.match(/BA[.\/\s]SMD[.\/\s]\d{4}[.\/\s]\d{2}[.\/\s]\d{3,5}/i);
+          if (match) {
+            this.detectedBaNumber = match[0].replace(/[\/\s]/g, '.').toUpperCase();
+            const filenameInput = document.getElementById('opt-ba-filename');
+            if (filenameInput) filenameInput.value = `${this.detectedBaNumber}.pdf`;
+          }
+        } catch (err) {
+          console.error("OCR Error:", err);
+          if (textBox) textBox.textContent = "Gagal memproses OCR pada file ini.";
+        } finally {
+          if (tag) tag.classList.add('hidden');
+        }
+      }
+
+      moveCard(index, direction) {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= this.files.length) return;
+        const temp = this.files[index];
+        this.files[index] = this.files[targetIndex];
+        this.files[targetIndex] = temp;
+        
+        this.selectedIndex = targetIndex;
+        this.renderFileList();
+        this.renderToolOptions(this.currentTool);
+        if (this.currentTool === 'ocr-ba') {
+          this.runOCRForSelectedFile();
+        }
+      }
+
+      openCropModal(index) {
+        this.currentCroppingIndex = index;
+        const item = this.files[index];
+        const modal = document.getElementById('crop-modal');
+        const imgEl = document.getElementById('cropper-image');
+        
+        imgEl.src = item.originalUrl || item.url;
+        modal.classList.remove('hidden');
+
+        if (this.cropper) this.cropper.destroy();
+
+        setTimeout(() => {
+          this.cropper = new Cropper(imgEl, { aspectRatio: NaN, viewMode: 1, autoCropArea: 0.9, responsive: true });
+        }, 100);
+      }
+
+      closeCropModal() {
+        document.getElementById('crop-modal').classList.add('hidden');
+        const laser = document.getElementById('modal-laser');
+        if (laser) laser.classList.add('hidden');
+        if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
+      }
+
+      triggerModalScanEffect() {
+        const laser = document.getElementById('modal-laser');
+        if (laser) {
+          laser.classList.remove('hidden');
+          setTimeout(() => laser.classList.add('hidden'), 3000);
+        }
+      }
+
+      applyScanFilter(ctx, width, height) {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          gray = (gray - 128) * 1.6 + 128;
+          gray = Math.min(255, Math.max(0, gray));
+          data[i] = gray; data[i + 1] = gray; data[i + 2] = gray;
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      applyCrop() {
+        if (!this.cropper || this.currentCroppingIndex === null) return;
+        const croppedCanvas = this.cropper.getCroppedCanvas({ maxWidth: 2480, maxHeight: 3508, fillColor: '#fff' });
+        const a4Width = 2480, a4Height = 3508;
+        const a4Canvas = document.createElement('canvas');
+        a4Canvas.width = a4Width; a4Canvas.height = a4Height;
+        const ctx = a4Canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, a4Width, a4Height);
+
+        const scale = Math.min(a4Width / croppedCanvas.width, a4Height / croppedCanvas.height);
+        const targetW = croppedCanvas.width * scale, targetH = croppedCanvas.height * scale;
+        const targetX = (a4Width - targetW) / 2, targetY = (a4Height - targetH) / 2;
+
+        ctx.drawImage(croppedCanvas, targetX, targetY, targetW, targetH);
+        if (this.scanMode === 'grayscale') this.applyScanFilter(ctx, a4Width, a4Height);
+
+        a4Canvas.toBlob(async (blob) => {
+          const a4File = new File([blob], `A4_Page_${this.currentCroppingIndex + 1}.jpg`, { type: 'image/jpeg' });
+          const newUrl = URL.createObjectURL(a4File);
+          this.files[this.currentCroppingIndex].file = a4File;
+          this.files[this.currentCroppingIndex].url = newUrl;
+          this.files[this.currentCroppingIndex].ocrText = null;
+          this.renderFileList();
+          this.renderToolOptions(this.currentTool);
+          if (this.currentTool === 'ocr-ba') this.runOCRForSelectedFile(true);
+          this.closeCropModal();
+        }, 'image/jpeg', 0.95);
+      }
+
+      async setScanMode(mode) {
+        this.scanMode = mode;
+        const btnColor = document.getElementById('mode-color-btn');
+        const btnGray = document.getElementById('mode-gray-btn');
+        const livePreviewImg = document.getElementById('live-preview-img');
+
+        if (btnColor && btnGray) {
+          if (mode === 'color') {
+            btnColor.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
+            btnGray.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5";
+            if (livePreviewImg) livePreviewImg.classList.remove('filter-grayscale-scan');
+          } else {
+            btnGray.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
+            btnColor.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5";
+            if (livePreviewImg) livePreviewImg.classList.add('filter-grayscale-scan');
+          }
+        }
+
+        // PERBAHARUI TAMPILAN THUMBNAIL REAL-TIME
+        this.renderFileList();
+      }
+
+      renderToolOptions(tool) {
+        const optionsContainer = document.getElementById('tool-options-content');
+        optionsContainer.innerHTML = '';
+
+        if (tool === 'ocr-ba') {
+          const currentItem = this.files[this.selectedIndex] || this.files[0];
+          const firstImgUrl = currentItem ? currentItem.url : '';
+          const defaultFilename = this.detectedBaNumber ? `${this.detectedBaNumber}.pdf` : (currentItem ? currentItem.finalName : 'BA.SMD.2026.09.015.pdf');
+
+          optionsContainer.innerHTML = `
+            <div class="space-y-4 text-xs">
+              
+              <!-- Live Scan Preview -->
+              <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 space-y-2">
+                <div class="flex justify-between items-center text-white px-1">
+                  <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-eye text-emerald-400"></i> Live Scan Preview</span>
+                  <span class="text-[10px] text-slate-400 font-medium">Pratinjau Aktif</span>
+                </div>
+                <div class="w-full h-44 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800/80 p-2 relative">
+                  ${firstImgUrl ? `<img id="live-preview-img" src="${firstImgUrl}" class="max-h-full max-w-full object-contain shadow-md ${this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}">` : `<p class="text-[11px] text-slate-500 italic">Pilih gambar untuk melihat pratinjau</p>`}
+                </div>
+              </div>
+
+              <!-- Mode Tampilan Dokumen -->
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                <label class="block font-bold text-slate-800">Mode Tampilan Dokumen</label>
+                <div class="flex gap-2">
+                  <button type="button" id="mode-color-btn" onclick="app.setScanMode('color')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'color' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-palette"></i> Warna Asli
+                  </button>
+                  <button type="button" id="mode-gray-btn" onclick="app.setScanMode('grayscale')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'grayscale' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Scan Hitam Putih
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-tight">Kartu pratinjau akan langsung menyesuaikan mode yang dipilih secara real-time.</p>
+              </div>
+
+              <!-- Nama Berkas Terdeteksi -->
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-1.5">
+                <div class="flex justify-between items-center">
+                  <label class="block font-bold text-slate-800">Nama Berkas Terdeteksi</label>
+                  <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <i class="fa-solid fa-file-invoice"></i> BA Terdeteksi!
+                  </span>
+                </div>
+                <input type="text" id="opt-ba-filename" value="${defaultFilename}" class="w-full text-xs p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-emerald-600 outline-none">
+              </div>
+
+              <!-- Format Cetak A4 Aktif -->
+              <div class="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200/80 space-y-1">
+                <div class="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                  <span>Format Cetak A4 Aktif</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                  Seluruh hasil potongan gambar diformat ulang sesuai dengan rasio standar <strong>A4 Portrait</strong>.
+                </p>
+              </div>
+
+            </div>
+          `;
+        } else if (tool === 'pdf-to-word' || tool === 'pdf-to-excel') {
+          optionsContainer.innerHTML = `
+            <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 space-y-2 text-xs">
+              <div class="flex items-center gap-2 text-blue-900 font-bold">
+                <i class="fa-solid fa-cloud p-1.5 bg-blue-600 text-white rounded-lg"></i>
+                <span>Adobe PDF Services Engine</span>
+              </div>
+              <p class="text-slate-600 leading-relaxed">
+                Dokumen akan dikonversi menggunakan API resmi Adobe yang berjalan pada server Node.js lokal (<code>localhost:3000</code>).
+              </p>
+            </div>
+          `;
+        } else {
+          optionsContainer.innerHTML = `<p class="text-xs text-slate-500">Pengaturan standar optimasi dokumen telah diterapkan.</p>`;
+        }
+      }
+
+      switchPreviewTab(tab) {
+        this.activeTab = tab;
+        ['preview', 'ocrtext'].forEach(t => {
+          const btn = document.getElementById(`tab-btn-${t}`);
+          const content = document.getElementById(`tab-content-${t}`);
+          if (btn && content) {
+            if (t === tab) {
+              btn.className = "pb-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 flex items-center gap-1.5";
+              content.classList.remove('hidden'); content.classList.add('flex');
+            } else {
+              btn.className = "pb-2 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-1.5";
+              content.classList.add('hidden'); content.classList.remove('flex');
+            }
+          }
+        });
+
+        if (tab === 'ocrtext') {
+          this.runOCRForSelectedFile();
+        }
+      }
+
+      async addFiles(newFiles) {
+        if (!newFiles || newFiles.length === 0) return;
+
+        const startIndex = this.files.length;
+
+        for (let f of newFiles) {
+          let previewUrl = URL.createObjectURL(f);
+
+          this.files.push({
+            file: f,
+            url: previewUrl,
+            originalUrl: URL.createObjectURL(f),
+            finalName: f.name.replace(/\.[^/.]+$/, "") + ".pdf",
+            sizeMb: (f.size / (1024 * 1024)).toFixed(2),
+            ocrText: null
+          });
+        }
+        
+        document.getElementById('dropzone-container').classList.add('hidden');
+        document.getElementById('preview-container').classList.remove('hidden');
+        document.getElementById('workspace-quick-actions').classList.remove('hidden');
+        document.getElementById('workspace-quick-actions').classList.add('flex');
+        document.getElementById('file-count-badge').textContent = `${this.files.length} Berkas Dipilih`;
+
+        this.selectedIndex = startIndex;
+        this.renderFileList();
+        this.renderToolOptions(this.currentTool);
+
+        if (this.currentTool === 'ocr-ba') {
+          this.runOCRForSelectedFile();
+        }
+      }
+
+      renderFileList() {
+        const grid = document.getElementById('file-list-grid');
+        grid.innerHTML = '';
+
+        const suffixes = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH', '7TH', '8TH'];
+
+        for (let idx = 0; idx < this.files.length; idx++) {
+          const item = this.files[idx];
+          const isSelected = idx === this.selectedIndex;
+          const badgeText = suffixes[idx] || `${idx + 1}TH`;
+
+          const card = document.createElement('div');
+          card.className = `relative rounded-2xl border p-3 flex flex-col items-center justify-between cursor-pointer transition-all bg-white shadow-sm ${
+            isSelected ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/40' : 'border-slate-200 hover:border-emerald-500'
+          }`;
+          
+          card.onclick = () => this.selectCard(idx);
+          
+          let previewHtml = '';
+          if (item.file.type.startsWith('image/')) {
+            previewHtml = `
+              <div class="relative w-full h-44 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1">
+                <span class="absolute top-2 left-2 bg-slate-900/90 backdrop-blur text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow z-10">${badgeText}</span>
+                
+                <button onclick="event.stopPropagation(); app.openCropModal(${idx})" type="button" class="absolute top-2 right-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg shadow flex items-center gap-1 z-10 transition-colors">
+                  <i class="fa-solid fa-crop-simple"></i> Potong Area
+                </button>
+
+                <img src="${item.url}" class="w-full h-full object-contain ${this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}">
+              </div>
+            `;
+          } else {
+            previewHtml = `
+              <div class="relative w-full h-44 bg-slate-50 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-slate-500 mb-2 p-2 text-center">
+                <span class="absolute top-2 left-2 bg-slate-900 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md">${badgeText}</span>
+                <i class="fa-solid fa-file-pdf text-5xl text-brand-600 mb-1"></i>
+                <span class="text-[11px] truncate max-w-full font-semibold text-slate-700">${item.file.name}</span>
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            ${previewHtml}
+            <div class="w-full text-center my-1">
+              <p class="text-xs font-bold text-slate-900 truncate">Halaman ${idx + 1} (A4)</p>
+              <p class="text-[10px] font-semibold text-slate-400">${item.sizeMb} MB</p>
+            </div>
+            
+            <div class="flex items-center justify-between w-full mt-1 pt-2 border-t border-slate-100 px-1">
+              <span class="text-[10px] font-bold text-slate-400">Canvas Acuan</span>
+              <div class="flex items-center gap-1">
+                <button onclick="event.stopPropagation(); app.moveCard(${idx}, -1)" type="button" class="p-1 px-1.5 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <button onclick="event.stopPropagation(); app.moveCard(${idx}, 1)" type="button" class="p-1 px-1.5 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === this.files.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold ml-1 transition-colors">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+      }
+
+      removeFile(index) {
+        this.files.splice(index, 1);
+        if (this.selectedIndex >= this.files.length) {
+          this.selectedIndex = Math.max(0, this.files.length - 1);
+        }
+        this.renderFileList();
+        this.renderToolOptions(this.currentTool);
+        document.getElementById('file-count-badge').textContent = `${this.files.length} Berkas Dipilih`;
+        
+        if (this.files.length > 0 && this.currentTool === 'ocr-ba') {
+          this.runOCRForSelectedFile();
+        } else if (this.files.length === 0) {
+          this.clearFiles();
+        }
+      }
+
+      clearFiles() {
+        this.files = [];
+        this.selectedIndex = 0;
+        this.detectedBaNumber = '';
+        document.getElementById('dropzone-container').classList.remove('hidden');
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('workspace-quick-actions').classList.add('hidden');
+      }
+
+      async processAdobeConversion(targetType) {
+  document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Proxy (${targetType.toUpperCase()})...`;
+  document.getElementById('processing-progress-bar').style.width = '40%';
+
+  // Format jenis konversi sesuai standar backend universal (e.g. 'pdf-to-excel')
+  const conversionType = `pdf-to-${targetType === 'docx' ? 'word' : targetType === 'xlsx' ? 'excel' : targetType}`;
+
+  const formData = new FormData();
+  formData.append('file', this.files[0].file);
+  formData.append('conversionType', conversionType);
+  formData.append('targetType', targetType); // Fallback tambahan
+
+  // PERBAIKAN UTAMA: Menggunakan Relative Path (/api/convert) agar berjalan publik di Vercel
+  const response = await fetch('/api/convert', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorMsg = await response.json().catch(() => ({}));
+    throw new Error(errorMsg.error || 'Gagal mengonversi dokumen via server proxy Adobe.');
+  }
+
+  document.getElementById('processing-progress-bar').style.width = '90%';
+  const blob = await response.blob();
+  
+  const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
+  const outputFilename = `${originalName}.${targetType}`;
+
+  this.setDownloadResult(blob, outputFilename);
+  this.showDownloadScreen();
+}
+      // GENERATE PDF A4 DENGAN FILTER HITAM PUTIH / WARNA DITERAPKAN SECARA PERMANEN
+      async processSmartScanPDF() {
+        document.getElementById('processing-status').textContent = "Menyusun halaman gambar & menerapkan filter PDF A4...";
+        document.getElementById('processing-progress-bar').style.width = '30%';
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+
+        for (let i = 0; i < this.files.length; i++) {
+          if (i > 0) pdf.addPage('a4', 'portrait');
+
+          const pct = Math.round(((i + 1) / this.files.length) * 80);
+          document.getElementById('processing-progress-bar').style.width = `${pct}%`;
+
+          const imgUrl = this.files[i].url;
+          
+          // MENGGUNAKAN CANVAS UNTUK APPLY FILTER SEBELUM DILAMPIRKAN KE PDF
+          const processedImgDataUrl = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || img.width;
+              canvas.height = img.naturalHeight || img.height;
+              const ctx = canvas.getContext('2d');
+
+              // DIBUAT DENGAN FILTER KONTRAS & HITAM PUTIH JIKA MODE GRAYSCALE AKTIF
+              if (this.scanMode === 'grayscale') {
+                ctx.filter = 'grayscale(100%) contrast(160%) brightness(105%)';
+              } else {
+                ctx.filter = 'none';
+              }
+
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              resolve(canvas.toDataURL('image/jpeg', 0.92));
+            };
+            img.onerror = reject;
+            img.src = imgUrl;
+          });
+
+          pdf.addImage(processedImgDataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        }
+
+        document.getElementById('processing-progress-bar').style.width = '100%';
+        const pdfArrayBuffer = pdf.output('arraybuffer');
+        const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+
+        let filename = 'BA.SMD.2026.09.015.pdf';
+        const filenameInput = document.getElementById('opt-ba-filename');
+        if (filenameInput && filenameInput.value.trim() !== '') {
+          filename = filenameInput.value.trim();
+          if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+        }
+
+        this.setDownloadResult(pdfBlob, filename);
+        this.showDownloadScreen();
+      }
+
+      async processAdobeConversion(targetType) {
+        document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Proxy (${targetType.toUpperCase()})...`;
+        document.getElementById('processing-progress-bar').style.width = '40%';
+
+        const formData = new FormData();
+        formData.append('file', this.files[0].file);
+        formData.append('targetType', targetType);
+
+        const response = await fetch('http://localhost:3000/api/convert', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error('Gagal mengonversi dokumen via server proxy Adobe.');
+
+        document.getElementById('processing-progress-bar').style.width = '90%';
+        const blob = await response.blob();
+        
+        const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
+        const outputFilename = `${originalName}.${targetType}`;
+
+        this.setDownloadResult(blob, outputFilename);
+        this.showDownloadScreen();
+      }
+
+      async processMergePDF() {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        for (let i = 0; i < this.files.length; i++) {
+          const arrayBuffer = await this.files[i].file.arrayBuffer();
+          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+        }
+        const pdfBytes = await mergedPdf.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        this.setDownloadResult(blob, 'gabungan_dokumen.pdf');
+        this.showDownloadScreen();
+      }
+
+      setDownloadResult(blob, filename) {
+        if (this.processedResult) URL.revokeObjectURL(this.processedResult);
+        
+        this.processedResult = URL.createObjectURL(blob);
+        const downloadBtn = document.getElementById('download-file-link');
+        
+        downloadBtn.href = this.processedResult;
+        downloadBtn.setAttribute('download', filename);
+        downloadBtn.download = filename;
+
+        document.getElementById('download-btn-label').textContent = `Unduh Berkas (${filename})`;
+      }
+
+      showDownloadScreen() {
+        document.getElementById('view-processing').classList.add('hidden');
+        document.getElementById('view-download').classList.remove('hidden');
+        if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+
+      resetState() {
+        this.clearFiles();
+        this.showHome();
+      }
+    }
+
+    let app;
+    window.addEventListener('DOMContentLoaded', () => { app = new PDFApp(); });
+  </script>
+</body>
+</html>
