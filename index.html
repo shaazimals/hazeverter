@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hazeverter - Pemrosesan Dokumen & Pemindai Pintar</title>
+  <title>Hazeverter - Pemrosesan & Konversi Dokumen Cloud Engine</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,8 +16,6 @@
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script>
@@ -84,14 +82,14 @@
             </div>
             <span>Haze<span class="text-brand-600">verter</span></span>
           </div>
-          <span class="hidden md:inline-block text-[11px] bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-full border border-brand-100 uppercase tracking-wider">ZERO-SERVER ENGINE</span>
+          <span class="hidden md:inline-block text-[11px] bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-full border border-brand-100 uppercase tracking-wider">CLOUD ENGINE READY</span>
         </div>
 
         <nav class="hidden lg:flex space-x-4 text-xs font-bold text-slate-700 tracking-wide">
-          <button onclick="app.selectTool('ocr-ba')" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> SMART SCAN & A4 CROPPER</button>
+          <button onclick="app.selectTool('ocr-ba')" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> SMART SCAN & CROP A4</button>
+          <button onclick="app.selectTool('pdf-to-word')" class="hover:text-brand-600 transition-colors py-2">PDF KE WORD</button>
+          <button onclick="app.selectTool('pdf-to-excel')" class="hover:text-brand-600 transition-colors py-2">PDF KE EXCEL</button>
           <button onclick="app.selectTool('merge')" class="hover:text-brand-600 transition-colors py-2">GABUNG PDF</button>
-          <button onclick="app.selectTool('split')" class="hover:text-brand-600 transition-colors py-2">PISAH HALAMAN</button>
-          <button onclick="app.selectTool('compress')" class="hover:text-brand-600 transition-colors py-2">KOMPRES PDF</button>
         </nav>
 
         <div class="flex items-center space-x-3">
@@ -109,17 +107,17 @@
     <section id="view-home" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       <div class="text-center max-w-3xl mx-auto mb-12">
         <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-          Olah Dokumen Praktis, Cepat & Tanpa Batas
+          Olah & Konversi Dokumen Praktis Cloud-Powered
         </h1>
         <p class="mt-4 text-base sm:text-lg text-slate-600 font-normal leading-relaxed">
-          Platform utilitas PDF terintegrasi berbasis client-side. Mengubah foto/HEIC menjadi PDF A4 presisi, ekstraksi nomor dokumen otomatis, dan edit PDF secara instan tanpa perlu unggah ke server.
+          Platform konversi dokumen terpadu berbasis cloud API. Ubah PDF dari/ke Word, Excel, PowerPoint, Gambar, serta Pemindai Smart Scan A4 secara cepat dan aman.
         </p>
       </div>
 
-      <!-- GRID 10 FITUR LENGKAP -->
+      <!-- GRID FITUR LENGKAP -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        <!-- 1. FEATURED: SMART SCANNER -->
+        <!-- FEATURED: SMART SCANNER -->
         <div onclick="app.selectTool('ocr-ba')" class="tool-card bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl cursor-pointer flex flex-col justify-between group relative overflow-hidden sm:col-span-2">
           <div class="absolute -right-4 -bottom-4 text-white/5 text-9xl font-extrabold pointer-events-none">A4</div>
           <div>
@@ -127,11 +125,11 @@
               <i class="fa-solid fa-crop-simple text-2xl text-emerald-400"></i>
             </div>
             <div class="flex items-center gap-2 mb-2 flex-wrap">
-              <h3 class="text-2xl font-bold text-white">Smart Scan & Free Crop A4</h3>
+              <h3 class="text-2xl font-bold text-white">Smart Scan & Crop A4</h3>
               <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
             </div>
             <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
-              Konversi foto fisik / HEIC iPhone menjadi dokumen standar A4 rapi. Dilengkapi *crop* bebas, filter kontras ala pemindai fisik, dan deteksi otomatis nomor BA.
+              Konversi foto fisik / HEIC iPhone menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
             </p>
           </div>
           <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
@@ -139,105 +137,7 @@
           </div>
         </div>
 
-        <!-- 2. MERGE PDF -->
-        <div onclick="app.selectTool('merge')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-object-group text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Penggabung PDF</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Satukan beberapa berkas PDF menjadi satu dokumen terurut dengan mudah.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 3. SPLIT PDF -->
-        <div onclick="app.selectTool('split')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-scissors text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Pemisah Halaman</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Ekstrak rentang halaman tertentu atau pisahkan setiap lembar menjadi PDF mandiri.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 4. COMPRESS PDF -->
-        <div onclick="app.selectTool('compress')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-compress text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Kompresi PDF</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Pangkas ukuran berkas PDF tanpa mengorbankan keterbacaan teks dan kualitas.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 5. PDF TO JPG -->
-        <div onclick="app.selectTool('pdf-to-jpg')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-regular fa-file-image text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">PDF ke Gambar JPG</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Ubah lembaran halaman dokumen PDF menjadi gambar resolusi tinggi.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 6. IMG TO PDF -->
-        <div onclick="app.selectTool('img-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-file-pdf text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Gambar ke PDF</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan foto standar JPG, PNG, atau WEBP menjadi satu PDF yang tertata.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 7. PROTECT PDF -->
-        <div onclick="app.selectTool('protect')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-lock text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Proteksi Kata Sandi</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Amankan dokumen sensitif dengan enkripsi *password* tingkat tinggi.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 8. WATERMARK PDF -->
-        <div onclick="app.selectTool('watermark')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
-          <div>
-            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-              <i class="fa-solid fa-stamp text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Cap Watermark</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Beri stempel teks transparan di atas halaman untuk hak cipta atau status kerahasiaan.</p>
-          </div>
-          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
-          </div>
-        </div>
-
-        <!-- 9. PDF TO WORD (ADOBE API) -->
+        <!-- PDF TO WORD -->
         <div onclick="app.selectTool('pdf-to-word')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
           <div>
             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -247,14 +147,14 @@
               <h3 class="text-lg font-bold text-slate-900">PDF ke Word</h3>
               <span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed">Konversi dokumen PDF menjadi berkas Microsoft Word (.docx) yang dapat diedit.</p>
+            <p class="text-xs text-slate-500 leading-relaxed">Konversi berkas PDF menjadi dokumen Microsoft Word (.docx) yang siap diedit.</p>
           </div>
           <div class="mt-6 text-blue-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </div>
         </div>
 
-        <!-- 10. PDF TO EXCEL (ADOBE API) -->
+        <!-- PDF TO EXCEL -->
         <div onclick="app.selectTool('pdf-to-excel')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
           <div>
             <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
@@ -267,6 +167,116 @@
             <p class="text-xs text-slate-500 leading-relaxed">Ekstrak tabel dalam PDF menjadi lembar kerja Microsoft Excel (.xlsx) rapi.</p>
           </div>
           <div class="mt-6 text-emerald-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- PDF TO POWERPOINT -->
+        <div onclick="app.selectTool('pdf-to-ppt')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-powerpoint text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">PDF ke PowerPoint</h3>
+              <span class="text-[9px] bg-orange-100 text-orange-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Ubah PDF menjadi salinan presentasi Microsoft PowerPoint (.pptx) interaktif.</p>
+          </div>
+          <div class="mt-6 text-orange-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- WORD TO PDF -->
+        <div onclick="app.selectTool('word-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-pdf text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">Word ke PDF</h3>
+              <span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Ubah dokumen DOC / DOCX menjadi PDF standar yang mudah dibaca.</p>
+          </div>
+          <div class="mt-6 text-blue-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- EXCEL TO PDF -->
+        <div onclick="app.selectTool('excel-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-pdf text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">Excel ke PDF</h3>
+              <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Konversi lembar kerja XLS / XLSX menjadi format PDF berkualitas tinggi.</p>
+          </div>
+          <div class="mt-6 text-emerald-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- POWERPOINT TO PDF -->
+        <div onclick="app.selectTool('ppt-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-pdf text-2xl"></i>
+            </div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <h3 class="text-lg font-bold text-slate-900">PowerPoint ke PDF</h3>
+              <span class="text-[9px] bg-orange-100 text-orange-800 font-bold px-1.5 py-0.5 rounded">Adobe API</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Konversi file slide PPT / PPTX menjadi PDF rapi siap cetak atau dibagikan.</p>
+          </div>
+          <div class="mt-6 text-orange-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- PDF TO JPG -->
+        <div onclick="app.selectTool('pdf-to-jpg')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <i class="fa-regular fa-file-image text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">PDF ke JPG</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Ubah lembaran halaman dokumen PDF menjadi berkas gambar resolusi tinggi.</p>
+          </div>
+          <div class="mt-6 text-purple-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- JPG TO PDF -->
+        <div onclick="app.selectTool('img-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-pdf text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">JPG / Gambar ke PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan foto JPG, PNG, atau WEBP menjadi satu PDF yang terurut rapi.</p>
+          </div>
+          <div class="mt-6 text-brand-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- MERGE PDF -->
+        <div onclick="app.selectTool('merge')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-object-group text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Penggabung PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Satukan beberapa berkas PDF menjadi satu dokumen tunggal secara aman.</p>
+          </div>
+          <div class="mt-6 text-indigo-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </div>
         </div>
@@ -284,7 +294,7 @@
           </button>
           <div>
             <h2 id="active-tool-title" class="text-xl font-bold text-slate-900">Smart Scan & Free Crop A4</h2>
-            <p id="active-tool-subtitle" class="text-xs text-slate-500">Sesuaikan potongan gambar, standarisasi A4, dan otomatisasi nomor BA</p>
+            <p id="active-tool-subtitle" class="text-xs text-slate-500">Sesuaikan pemotongan gambar, format A4, dan ekstraksi nomor BA</p>
           </div>
         </div>
 
@@ -294,7 +304,7 @@
           </span>
           <label class="cursor-pointer bg-brand-50 text-brand-700 hover:bg-brand-100 font-semibold text-xs px-3.5 py-2 rounded-lg border border-brand-200 transition-colors flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> <span id="add-more-label">Tambah Berkas</span>
-            <input type="file" id="additional-file-input" class="hidden" multiple accept="image/heic,image/heif,image/jpeg,image/png,image/webp,.heic,.pdf" onchange="app.handleFileSelect(event)">
+            <input type="file" id="additional-file-input" class="hidden" multiple onchange="app.handleFileSelect(event)">
           </label>
         </div>
       </div>
@@ -311,18 +321,18 @@
           <div class="flex flex-wrap justify-center gap-4">
             <label id="dropzone-btn-label-box" class="cursor-pointer bg-brand-600 hover:bg-brand-700 text-white font-bold text-md px-6 py-3.5 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 active:scale-95">
               <i class="fa-solid fa-folder-open"></i> <span id="dropzone-btn-text">Pilih Berkas Dokumen</span>
-              <input type="file" id="main-file-input" class="hidden" multiple accept="image/heic,image/heif,image/jpeg,image/png,image/webp,.heic,.pdf" onchange="app.handleFileSelect(event)">
+              <input type="file" id="main-file-input" class="hidden" multiple onchange="app.handleFileSelect(event)">
             </label>
           </div>
         </div>
 
         <div id="preview-container" class="hidden w-full max-w-7xl flex flex-col lg:flex-row gap-6 items-start my-auto">
           
-          <!-- ANTREAN BERKAS (LEFT PANEL) -->
+          <!-- ANTREAN BERKAS -->
           <div class="flex-grow w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col min-h-[500px]">
             <div class="flex flex-wrap justify-between items-center mb-4 pb-3 border-b border-slate-100 gap-2">
               <div class="flex items-center gap-3">
-                <h4 class="font-extrabold text-slate-800 text-sm tracking-wider uppercase">ANTREAN BERKAS</h4>
+                <h4 class="font-extrabold text-slate-800 text-sm tracking-wider uppercase">DAFTAR BERKAS DILAMPIRKAN</h4>
                 <div id="ocr-status-tag" class="hidden text-xs bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-brand-200">
                   <i class="fa-solid fa-circle-notch animate-spin text-brand-600"></i> Pemindaian OCR Aktif
                 </div>
@@ -343,25 +353,25 @@
 
             <div id="tab-content-preview">
               <div id="file-list-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-6 max-h-[520px] overflow-y-auto custom-scrollbar p-2 w-full">
-                <!-- Injected via JavaScript -->
+                <!-- Injected via JS -->
               </div>
             </div>
 
             <div id="tab-content-ocrtext" class="hidden flex-col gap-3">
               <div class="flex justify-between items-center bg-slate-100 p-2.5 rounded-xl text-xs font-bold text-slate-700">
-                <span>Ekstraksi Teks (OCR Real-time Engine)</span>
+                <span>Ekstraksi Teks (OCR Engine)</span>
                 <button onclick="app.runOCRForSelectedFile(true)" type="button" class="px-3 py-1 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex items-center gap-1">
                   <i class="fa-solid fa-rotate-right"></i> Scan Ulang
                 </button>
               </div>
               <div class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs font-mono max-h-[380px] overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap select-all" id="ocr-extracted-text-box">
-                Pilih foto pada daftar di atas untuk membaca atau menjalankan ulang scan OCR.
+                Pilih foto untuk melihat atau membaca teks via OCR.
               </div>
             </div>
 
           </div>
 
-          <!-- PENGATURAN & OPSI (RIGHT PANEL) -->
+          <!-- PENGATURAN PANEL -->
           <div class="w-full lg:w-96 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between shrink-0">
             <div>
               <h4 id="options-panel-title" class="font-bold text-slate-900 text-base mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
@@ -369,13 +379,13 @@
                 <i class="fa-solid fa-sliders text-slate-400"></i>
               </h4>
               <div id="tool-options-content" class="space-y-4">
-                <!-- Injected via JavaScript -->
+                <!-- Injected via JS -->
               </div>
             </div>
 
             <div class="mt-8 pt-4 border-t border-slate-100">
               <button id="process-action-btn" onclick="app.processTool()" type="button" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95">
-                <span id="process-btn-text">Buat Dokumen PDF A4</span>
+                <span id="process-btn-text">Mulai Proses Dokumen</span>
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
@@ -394,7 +404,7 @@
             <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
               <i class="fa-solid fa-crop-simple text-brand-600"></i> Potong Area Bebas & Pas A4
             </h3>
-            <p class="text-xs text-slate-500">Atur batas potong secara manual, sistem akan langsung mempresisikan ke kertas A4</p>
+            <p class="text-xs text-slate-500">Atur batas potong secara manual, sistem akan mempresisikan ke kertas A4</p>
           </div>
           <button onclick="app.closeCropModal()" class="text-slate-400 hover:text-slate-700 p-2">
             <i class="fa-solid fa-xmark text-xl"></i>
@@ -430,12 +440,12 @@
         <div id="processing-preview-thumb" class="absolute inset-4 bg-contain bg-no-repeat bg-center opacity-60"></div>
         <div class="scanner-laser"></div>
         <div class="absolute bottom-3 bg-slate-900/90 backdrop-blur text-brand-300 text-[10px] font-mono px-3 py-1 rounded-full border border-brand-500/30">
-          HAZEVERTER ENGINE WORKING...
+          HAZEVERTER CLOUD ENGINE...
         </div>
       </div>
 
       <h3 id="processing-title" class="text-2xl font-bold text-white mb-2">Memproses Dokumen Anda...</h3>
-      <p id="processing-status" class="text-sm text-brand-200 mb-6 max-w-sm">Proses pemindaian & penyelarasan halaman sedang berlangsung...</p>
+      <p id="processing-status" class="text-sm text-brand-200 mb-6 max-w-sm">Proses konversi sedang dikirim ke Cloud Server...</p>
 
       <div class="w-full max-w-xs bg-slate-800 rounded-full h-3 overflow-hidden border border-brand-500/30">
         <div id="processing-progress-bar" class="bg-gradient-to-r from-brand-500 to-emerald-300 h-full w-0 transition-all duration-300"></div>
@@ -448,16 +458,16 @@
         <div class="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-6 text-3xl shadow-inner border border-brand-100">
           <i class="fa-solid fa-check"></i>
         </div>
-        <h2 id="success-heading" class="text-2xl font-extrabold text-slate-900 mb-2">Dokumen Selesai Dipproses!</h2>
+        <h2 id="success-heading" class="text-2xl font-extrabold text-slate-900 mb-2">Dokumen Selesai Diproses!</h2>
         <p id="success-message" class="text-sm text-slate-500 mb-6">Dokumen telah berhasil diolah dan siap untuk diunduh.</p>
 
         <a id="download-file-link" href="#" download="dokumen.pdf" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-3 text-lg mb-4 cursor-pointer active:scale-95">
           <i class="fa-solid fa-download"></i>
-          <span id="download-btn-label">Unduh Dokumen</span>
+          <span id="download-btn-label">Unduh Dokumen Hasil</span>
         </a>
 
         <button onclick="app.resetState()" type="button" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-colors text-sm">
-          Kembali ke Berkas Utama
+          Kembali ke Beranda Fitur
         </button>
       </div>
     </section>
@@ -467,7 +477,7 @@
   <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
       <div>
-        © 2026 Hazeverter — Privacy-First Document Utilities & Smart Scanner.
+        © 2026 Hazeverter — Privacy-First Document Utilities & Cloud Engine.
       </div>
       <div class="flex space-x-6 text-slate-400 font-medium">
         <span class="hover:text-brand-600 cursor-pointer">Kebijakan Privasi</span>
@@ -483,7 +493,6 @@
         this.files = [];
         this.selectedIndex = 0;
         this.processedResult = null;
-        this.processedFileName = 'dokumen_hazeverter.pdf';
         this.activeTab = 'preview';
         this.cropper = null;
         this.currentCroppingIndex = null;
@@ -493,43 +502,73 @@
         this.toolConfig = {
           'ocr-ba': {
             title: 'Smart Scan & Free Crop A4',
-            subtitle: 'Pemindaian pintar, penyesuaian area bebas, dan konversi presisi A4',
+            subtitle: 'Pemindaian foto, penyesuaian area bebas, dan pemotongan A4',
             accept: 'image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
             icon: 'fa-expand',
             btnText: 'Buat Dokumen PDF A4 →',
             btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas foto dokumen di sini (Mendukung iPhone HEIC & Potong A4)',
-            btnLabel: 'Pilih Foto / HEIC Galeri'
+            desc: 'Tarik & lepas foto dokumen di sini (HEIC & Potong A4)',
+            btnLabel: 'Pilih Foto / Galeri'
           },
-          'merge': {
-            title: 'Penggabung Berkas PDF',
-            subtitle: 'Satukan beberapa dokumen PDF sesuai urutan keinginan Anda',
+          'pdf-to-word': {
+            title: 'Konversi PDF ke Word (.docx)',
+            subtitle: 'Ubah dokumen PDF menjadi file Microsoft Word yang dapat diedit via Adobe API',
             accept: '.pdf',
-            icon: 'fa-object-group',
-            btnText: 'Gabungkan PDF Sekarang →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas berkas PDF di sini',
+            icon: 'fa-file-word',
+            btnText: 'Konversi ke Word (.docx) →',
+            btnBg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Word',
             btnLabel: 'Pilih Berkas PDF'
           },
-          'split': {
-            title: 'Pemisah Halaman PDF',
-            subtitle: 'Pisahkan dokumen menjadi beberapa bagian atau rentang halaman',
+          'pdf-to-excel': {
+            title: 'Konversi PDF ke Excel (.xlsx)',
+            subtitle: 'Ekstrak tabel dalam PDF menjadi lembar kerja Microsoft Excel via Adobe API',
             accept: '.pdf',
-            icon: 'fa-scissors',
-            btnText: 'Pisahkan PDF Sekarang →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas berkas PDF yang ingin dipisah di sini',
+            icon: 'fa-file-excel',
+            btnText: 'Konversi ke Excel (.xlsx) →',
+            btnBg: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Excel',
             btnLabel: 'Pilih Berkas PDF'
           },
-          'compress': {
-            title: 'Pengompres Ukuran PDF',
-            subtitle: 'Optimalkan ukuran dokumen agar lebih ringan untuk dikirim',
+          'pdf-to-ppt': {
+            title: 'Konversi PDF ke PowerPoint (.pptx)',
+            subtitle: 'Ubah dokumen PDF menjadi salinan presentasi PPTX via Adobe API',
             accept: '.pdf',
-            icon: 'fa-compress',
-            btnText: 'Kompres Ukuran PDF →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas berkas PDF yang ingin dikompresi di sini',
+            icon: 'fa-file-powerpoint',
+            btnText: 'Konversi ke PowerPoint (.pptx) →',
+            btnBg: 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/20',
+            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke PowerPoint',
             btnLabel: 'Pilih Berkas PDF'
+          },
+          'word-to-pdf': {
+            title: 'Konversi Word (.docx) ke PDF',
+            subtitle: 'Ubah berkas Microsoft Word menjadi dokumen PDF siap cetak via Adobe API',
+            accept: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            icon: 'fa-file-pdf',
+            btnText: 'Konversi ke PDF →',
+            btnBg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20',
+            desc: 'Tarik & lepas berkas DOC / DOCX di sini',
+            btnLabel: 'Pilih Berkas Word'
+          },
+          'excel-to-pdf': {
+            title: 'Konversi Excel (.xlsx) ke PDF',
+            subtitle: 'Ubah lembar kerja Microsoft Excel menjadi dokumen PDF via Adobe API',
+            accept: '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            icon: 'fa-file-pdf',
+            btnText: 'Konversi ke PDF →',
+            btnBg: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20',
+            desc: 'Tarik & lepas berkas XLS / XLSX di sini',
+            btnLabel: 'Pilih Berkas Excel'
+          },
+          'ppt-to-pdf': {
+            title: 'Konversi PowerPoint (.pptx) ke PDF',
+            subtitle: 'Ubah slide Microsoft PowerPoint menjadi dokumen PDF via Adobe API',
+            accept: '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            icon: 'fa-file-pdf',
+            btnText: 'Konversi ke PDF →',
+            btnBg: 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/20',
+            desc: 'Tarik & lepas berkas PPT / PPTX di sini',
+            btnLabel: 'Pilih Berkas PowerPoint'
           },
           'pdf-to-jpg': {
             title: 'Ekstraksi PDF ke Gambar JPG',
@@ -537,7 +576,7 @@
             accept: '.pdf',
             icon: 'fa-file-image',
             btnText: 'Ekstrak Jadi Gambar →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            btnBg: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20',
             desc: 'Tarik & lepas berkas PDF di sini',
             btnLabel: 'Pilih Berkas PDF'
           },
@@ -551,44 +590,14 @@
             desc: 'Tarik & lepas berkas foto di sini',
             btnLabel: 'Pilih Foto Galeri'
           },
-          'protect': {
-            title: 'Proteksi Dokumen PDF',
-            subtitle: 'Lindungi akses dokumen dengan kata sandi enkripsi privat',
+          'merge': {
+            title: 'Penggabung Berkas PDF',
+            subtitle: 'Satukan beberapa dokumen PDF sesuai urutan keinginan Anda',
             accept: '.pdf',
-            icon: 'fa-lock',
-            btnText: 'Pasang Kata Sandi →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas berkas PDF yang ingin dikunci di sini',
-            btnLabel: 'Pilih Berkas PDF'
-          },
-          'watermark': {
-            title: 'Penambahan Cap Watermark',
-            subtitle: 'Beri tanda air transparan untuk hak cipta dokumen',
-            accept: '.pdf',
-            icon: 'fa-stamp',
-            btnText: 'Tambahkan Watermark →',
-            btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
+            icon: 'fa-object-group',
+            btnText: 'Gabungkan PDF Sekarang →',
+            btnBg: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20',
             desc: 'Tarik & lepas berkas PDF di sini',
-            btnLabel: 'Pilih Berkas PDF'
-          },
-          'pdf-to-word': {
-            title: 'Konversi PDF ke Word (.docx)',
-            subtitle: 'Ubah dokumen PDF menjadi file Microsoft Word yang dapat diedit via Adobe API',
-            accept: '.pdf',
-            icon: 'fa-file-word',
-            btnText: 'Konversi ke Word (.docx) →',
-            btnBg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20',
-            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Word di sini',
-            btnLabel: 'Pilih Berkas PDF'
-          },
-          'pdf-to-excel': {
-            title: 'Konversi PDF ke Excel (.xlsx)',
-            subtitle: 'Ekstrak tabel dalam PDF menjadi lembar kerja Microsoft Excel via Adobe API',
-            accept: '.pdf',
-            icon: 'fa-file-excel',
-            btnText: 'Konversi ke Excel (.xlsx) →',
-            btnBg: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20',
-            desc: 'Tarik & lepas berkas PDF yang ingin diubah ke Excel di sini',
             btnLabel: 'Pilih Berkas PDF'
           }
         };
@@ -598,6 +607,7 @@
 
       initDragAndDrop() {
         const dropzone = document.getElementById('dropzone-container');
+        if (!dropzone) return;
         ['dragenter', 'dragover'].forEach(eventName => {
           dropzone.addEventListener(eventName, (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -737,7 +747,6 @@
           selectedItem.ocrText = extractedText;
           if (textBox) textBox.textContent = extractedText;
 
-          // REGEX KHUSUS FORMAT: BA.SMD.TAHUN.BULAN.NOMOR_BA ATAU BA/SMD/...
           const match = extractedText.match(/BA[.\/\s]SMD[.\/\s]\d{4}[.\/\s]\d{2}[.\/\s]\d{3,5}/i);
           if (match) {
             this.detectedBaNumber = match[0].replace(/[\/\s]/g, '.').toUpperCase();
@@ -841,24 +850,8 @@
 
       async setScanMode(mode) {
         this.scanMode = mode;
-        const btnColor = document.getElementById('mode-color-btn');
-        const btnGray = document.getElementById('mode-gray-btn');
-        const livePreviewImg = document.getElementById('live-preview-img');
-
-        if (btnColor && btnGray) {
-          if (mode === 'color') {
-            btnColor.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
-            btnGray.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5";
-            if (livePreviewImg) livePreviewImg.classList.remove('filter-grayscale-scan');
-          } else {
-            btnGray.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
-            btnColor.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5";
-            if (livePreviewImg) livePreviewImg.classList.add('filter-grayscale-scan');
-          }
-        }
-
-        // PERBAHARUI TAMPILAN THUMBNAIL REAL-TIME
         this.renderFileList();
+        this.renderToolOptions(this.currentTool);
       }
 
       renderToolOptions(tool) {
@@ -872,70 +865,51 @@
 
           optionsContainer.innerHTML = `
             <div class="space-y-4 text-xs">
-              
-              <!-- Live Scan Preview -->
               <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 space-y-2">
                 <div class="flex justify-between items-center text-white px-1">
                   <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-eye text-emerald-400"></i> Live Scan Preview</span>
-                  <span class="text-[10px] text-slate-400 font-medium">Pratinjau Aktif</span>
                 </div>
                 <div class="w-full h-44 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800/80 p-2 relative">
                   ${firstImgUrl ? `<img id="live-preview-img" src="${firstImgUrl}" class="max-h-full max-w-full object-contain shadow-md ${this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}">` : `<p class="text-[11px] text-slate-500 italic">Pilih gambar untuk melihat pratinjau</p>`}
                 </div>
               </div>
 
-              <!-- Mode Tampilan Dokumen -->
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2">
                 <label class="block font-bold text-slate-800">Mode Tampilan Dokumen</label>
                 <div class="flex gap-2">
-                  <button type="button" id="mode-color-btn" onclick="app.setScanMode('color')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'color' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} shadow-sm flex items-center justify-center gap-1.5">
+                  <button type="button" onclick="app.setScanMode('color')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'color' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} shadow-sm flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-palette"></i> Warna Asli
                   </button>
-                  <button type="button" id="mode-gray-btn" onclick="app.setScanMode('grayscale')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'grayscale' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} flex items-center justify-center gap-1.5">
+                  <button type="button" onclick="app.setScanMode('grayscale')" class="flex-1 py-2 px-3 text-xs font-bold rounded-xl ${this.scanMode === 'grayscale' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'} flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-print"></i> Scan Hitam Putih
                   </button>
                 </div>
-                <p class="text-[10px] text-slate-400 leading-tight">Kartu pratinjau akan langsung menyesuaikan mode yang dipilih secara real-time.</p>
               </div>
 
-              <!-- Nama Berkas Terdeteksi -->
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-1.5">
-                <div class="flex justify-between items-center">
-                  <label class="block font-bold text-slate-800">Nama Berkas Terdeteksi</label>
-                  <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <i class="fa-solid fa-file-invoice"></i> BA Terdeteksi!
-                  </span>
-                </div>
+                <label class="block font-bold text-slate-800">Nama Berkas PDF</label>
                 <input type="text" id="opt-ba-filename" value="${defaultFilename}" class="w-full text-xs p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-emerald-600 outline-none">
               </div>
-
-              <!-- Format Cetak A4 Aktif -->
-              <div class="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200/80 space-y-1">
-                <div class="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
-                  <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                  <span>Format Cetak A4 Aktif</span>
-                </div>
-                <p class="text-[11px] text-slate-600 leading-relaxed">
-                  Seluruh hasil potongan gambar diformat ulang sesuai dengan rasio standar <strong>A4 Portrait</strong>.
-                </p>
-              </div>
-
             </div>
           `;
-        } else if (tool === 'pdf-to-word' || tool === 'pdf-to-excel') {
+        } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(tool)) {
           optionsContainer.innerHTML = `
-            <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 space-y-2 text-xs">
+            <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 space-y-3 text-xs">
               <div class="flex items-center gap-2 text-blue-900 font-bold">
                 <i class="fa-solid fa-cloud p-1.5 bg-blue-600 text-white rounded-lg"></i>
-                <span>Adobe PDF Services Engine</span>
+                <span>Adobe PDF Services Cloud Engine</span>
               </div>
               <p class="text-slate-600 leading-relaxed">
-                Dokumen akan dikonversi menggunakan API resmi Adobe yang berjalan pada server Node.js lokal (<code>localhost:3000</code>).
+                Dokumen akan dikonversi secara presisi menggunakan API resmi Adobe yang berjalan via serverless cloud Vercel.
               </p>
+              <button onclick="app.processTool()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
+                <span>Jalankan Konversi Cloud</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
             </div>
           `;
         } else {
-          optionsContainer.innerHTML = `<p class="text-xs text-slate-500">Pengaturan standar optimasi dokumen telah diterapkan.</p>`;
+          optionsContainer.innerHTML = `<p class="text-xs text-slate-500">Pengaturan optimasi standar telah diterapkan.</p>`;
         }
       }
 
@@ -997,12 +971,9 @@
         const grid = document.getElementById('file-list-grid');
         grid.innerHTML = '';
 
-        const suffixes = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH', '7TH', '8TH'];
-
         for (let idx = 0; idx < this.files.length; idx++) {
           const item = this.files[idx];
           const isSelected = idx === this.selectedIndex;
-          const badgeText = suffixes[idx] || `${idx + 1}TH`;
 
           const card = document.createElement('div');
           card.className = `relative rounded-2xl border p-3 flex flex-col items-center justify-between cursor-pointer transition-all bg-white shadow-sm ${
@@ -1015,20 +986,16 @@
           if (item.file.type.startsWith('image/')) {
             previewHtml = `
               <div class="relative w-full h-44 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1">
-                <span class="absolute top-2 left-2 bg-slate-900/90 backdrop-blur text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow z-10">${badgeText}</span>
-                
                 <button onclick="event.stopPropagation(); app.openCropModal(${idx})" type="button" class="absolute top-2 right-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg shadow flex items-center gap-1 z-10 transition-colors">
-                  <i class="fa-solid fa-crop-simple"></i> Potong Area
+                  <i class="fa-solid fa-crop-simple"></i> Potong
                 </button>
-
                 <img src="${item.url}" class="w-full h-full object-contain ${this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}">
               </div>
             `;
           } else {
             previewHtml = `
               <div class="relative w-full h-44 bg-slate-50 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-slate-500 mb-2 p-2 text-center">
-                <span class="absolute top-2 left-2 bg-slate-900 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md">${badgeText}</span>
-                <i class="fa-solid fa-file-pdf text-5xl text-brand-600 mb-1"></i>
+                <i class="fa-solid fa-file text-5xl text-brand-600 mb-1"></i>
                 <span class="text-[11px] truncate max-w-full font-semibold text-slate-700">${item.file.name}</span>
               </div>
             `;
@@ -1037,20 +1004,14 @@
           card.innerHTML = `
             ${previewHtml}
             <div class="w-full text-center my-1">
-              <p class="text-xs font-bold text-slate-900 truncate">Halaman ${idx + 1} (A4)</p>
+              <p class="text-xs font-bold text-slate-900 truncate">${item.file.name}</p>
               <p class="text-[10px] font-semibold text-slate-400">${item.sizeMb} MB</p>
             </div>
             
             <div class="flex items-center justify-between w-full mt-1 pt-2 border-t border-slate-100 px-1">
-              <span class="text-[10px] font-bold text-slate-400">Canvas Acuan</span>
+              <span class="text-[10px] font-bold text-slate-400">Berkas ${idx + 1}</span>
               <div class="flex items-center gap-1">
-                <button onclick="event.stopPropagation(); app.moveCard(${idx}, -1)" type="button" class="p-1 px-1.5 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
-                  <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <button onclick="event.stopPropagation(); app.moveCard(${idx}, 1)" type="button" class="p-1 px-1.5 text-slate-400 hover:text-slate-700 text-xs font-bold ${idx === this.files.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
-                  <i class="fa-solid fa-arrow-right"></i>
-                </button>
-                <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold ml-1 transition-colors">
+                <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold transition-colors">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -1085,41 +1046,32 @@
         document.getElementById('workspace-quick-actions').classList.add('hidden');
       }
 
-      async processAdobeConversion(targetType) {
-  document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Proxy (${targetType.toUpperCase()})...`;
-  document.getElementById('processing-progress-bar').style.width = '40%';
+      async processTool() {
+        if (this.files.length === 0) return alert('Pilih setidaknya satu berkas untuk diproses.');
 
-  // Format jenis konversi sesuai standar backend universal (e.g. 'pdf-to-excel')
-  const conversionType = `pdf-to-${targetType === 'docx' ? 'word' : targetType === 'xlsx' ? 'excel' : targetType}`;
+        document.getElementById('view-workspace').classList.add('hidden');
+        document.getElementById('view-processing').classList.remove('hidden');
 
-  const formData = new FormData();
-  formData.append('file', this.files[0].file);
-  formData.append('conversionType', conversionType);
-  formData.append('targetType', targetType); // Fallback tambahan
+        try {
+          if (this.currentTool === 'ocr-ba' || this.currentTool === 'img-to-pdf') {
+            await this.processSmartScanPDF();
+          } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool)) {
+            await this.processCloudConversion(this.currentTool);
+          } else if (this.currentTool === 'merge') {
+            await this.processMergePDF();
+          } else {
+            this.setDownloadResult(this.files[0].file, "dokumen_hasil.pdf");
+            this.showDownloadScreen();
+          }
+        } catch (error) {
+          console.error(error);
+          alert('Error: ' + error.message);
+          this.selectTool(this.currentTool);
+        }
+      }
 
-  // PERBAIKAN UTAMA: Menggunakan Relative Path (/api/convert) agar berjalan publik di Vercel
-  const response = await fetch('/api/convert', {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!response.ok) {
-    const errorMsg = await response.json().catch(() => ({}));
-    throw new Error(errorMsg.error || 'Gagal mengonversi dokumen via server proxy Adobe.');
-  }
-
-  document.getElementById('processing-progress-bar').style.width = '90%';
-  const blob = await response.blob();
-  
-  const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
-  const outputFilename = `${originalName}.${targetType}`;
-
-  this.setDownloadResult(blob, outputFilename);
-  this.showDownloadScreen();
-}
-      // GENERATE PDF A4 DENGAN FILTER HITAM PUTIH / WARNA DITERAPKAN SECARA PERMANEN
       async processSmartScanPDF() {
-        document.getElementById('processing-status').textContent = "Menyusun halaman gambar & menerapkan filter PDF A4...";
+        document.getElementById('processing-status').textContent = "Menyusun halaman gambar...";
         document.getElementById('processing-progress-bar').style.width = '30%';
 
         const { jsPDF } = window.jspdf;
@@ -1135,7 +1087,6 @@
 
           const imgUrl = this.files[i].url;
           
-          // MENGGUNAKAN CANVAS UNTUK APPLY FILTER SEBELUM DILAMPIRKAN KE PDF
           const processedImgDataUrl = await new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
@@ -1145,7 +1096,6 @@
               canvas.height = img.naturalHeight || img.height;
               const ctx = canvas.getContext('2d');
 
-              // DIBUAT DENGAN FILTER KONTRAS & HITAM PUTIH JIKA MODE GRAYSCALE AKTIF
               if (this.scanMode === 'grayscale') {
                 ctx.filter = 'grayscale(100%) contrast(160%) brightness(105%)';
               } else {
@@ -1166,7 +1116,7 @@
         const pdfArrayBuffer = pdf.output('arraybuffer');
         const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
 
-        let filename = 'BA.SMD.2026.09.015.pdf';
+        let filename = 'dokumen_hazeverter.pdf';
         const filenameInput = document.getElementById('opt-ba-filename');
         if (filenameInput && filenameInput.value.trim() !== '') {
           filename = filenameInput.value.trim();
@@ -1177,26 +1127,36 @@
         this.showDownloadScreen();
       }
 
-      async processAdobeConversion(targetType) {
-        document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Proxy (${targetType.toUpperCase()})...`;
+      // KONEKSI UTAMA KE BACKEND VERCEL SERVERLESS (/api/convert)
+      async processCloudConversion(conversionType) {
+        document.getElementById('processing-status').textContent = `Mengirim berkas ke Adobe API Cloud Engine (${conversionType})...`;
         document.getElementById('processing-progress-bar').style.width = '40%';
 
         const formData = new FormData();
         formData.append('file', this.files[0].file);
-        formData.append('targetType', targetType);
+        formData.append('conversionType', conversionType);
 
-        const response = await fetch('http://localhost:3000/api/convert', {
+        const response = await fetch('/api/convert', {
           method: 'POST',
           body: formData
         });
 
-        if (!response.ok) throw new Error('Gagal mengonversi dokumen via server proxy Adobe.');
+        if (!response.ok) {
+          const errorMsg = await response.json().catch(() => ({}));
+          throw new Error(errorMsg.error || 'Gagal mengonversi dokumen via server Adobe.');
+        }
 
         document.getElementById('processing-progress-bar').style.width = '90%';
         const blob = await response.blob();
         
         const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
-        const outputFilename = `${originalName}.${targetType}`;
+        
+        let ext = 'pdf';
+        if (conversionType === 'pdf-to-word') ext = 'docx';
+        else if (conversionType === 'pdf-to-excel') ext = 'xlsx';
+        else if (conversionType === 'pdf-to-ppt') ext = 'pptx';
+
+        const outputFilename = `${originalName}.${ext}`;
 
         this.setDownloadResult(blob, outputFilename);
         this.showDownloadScreen();
