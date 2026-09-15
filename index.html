@@ -20,6 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     if (typeof pdfjsLib !== 'undefined') {
@@ -260,6 +261,53 @@
           <div class="mt-6 text-orange-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </div>
+        </div>
+
+        <!-- PDF TO JPG -->
+        <div onclick="app.selectTool('pdf-to-jpg')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-file-image text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">PDF ke JPG</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Ubah setiap halaman PDF menjadi JPG berkualitas tinggi. Banyak halaman diunduh sebagai ZIP.</p>
+          </div>
+          <div class="mt-6 text-amber-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">Pilih PDF <i class="fa-solid fa-arrow-right text-[10px]"></i></div>
+        </div>
+
+        <!-- JPG TO PDF -->
+        <div onclick="app.selectTool('jpg-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-yellow-500 group-hover:text-white transition-colors">
+              <i class="fa-solid fa-images text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">JPG ke PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan JPG atau PNG menjadi PDF; urutan gambar dapat digeser sebelum diproses.</p>
+          </div>
+          <div class="mt-6 text-yellow-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">Pilih Gambar <i class="fa-solid fa-arrow-right text-[10px]"></i></div>
+        </div>
+
+        <!-- HTML TO PDF -->
+        <div onclick="app.selectTool('html-to-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div>
+            <div class="w-12 h-12 bg-cyan-50 text-cyan-700 rounded-xl flex items-center justify-center mb-4 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+              <i class="fa-brands fa-html5 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">HTML ke PDF</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Unggah file HTML lalu simpan tampilan halamannya sebagai dokumen PDF.</p>
+          </div>
+          <div class="mt-6 text-cyan-700 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">Pilih HTML <i class="fa-solid fa-arrow-right text-[10px]"></i></div>
+        </div>
+
+        <!-- MERGE PDF -->
+        <div onclick="app.selectTool('split-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div><div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-rose-500 group-hover:text-white transition-colors"><i class="fa-solid fa-scissors text-2xl"></i></div><h3 class="text-lg font-bold text-slate-900 mb-1">Split PDF</h3><p class="text-xs text-slate-500 leading-relaxed">Pisahkan halaman tertentu, rentang halaman, atau seluruh halaman menjadi file terpisah.</p></div>
+          <div class="mt-6 text-rose-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">Pilih PDF <i class="fa-solid fa-arrow-right text-[10px]"></i></div>
+        </div>
+
+        <div onclick="app.selectTool('organize-pdf')" class="tool-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-between group">
+          <div><div class="w-12 h-12 bg-fuchsia-50 text-fuchsia-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-fuchsia-600 group-hover:text-white transition-colors"><i class="fa-solid fa-arrow-down-a-z text-2xl"></i></div><h3 class="text-lg font-bold text-slate-900 mb-1">Organize PDF</h3><p class="text-xs text-slate-500 leading-relaxed">Geser urutan, putar ke kiri atau kanan, dan hapus halaman PDF.</p></div>
+          <div class="mt-6 text-fuchsia-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">Atur Halaman <i class="fa-solid fa-arrow-right text-[10px]"></i></div>
         </div>
 
         <!-- MERGE PDF -->
@@ -650,6 +698,31 @@
             desc: 'Tarik & lepas berkas PPTX di sini',
             btnLabel: 'Pilih Berkas PowerPoint'
           },
+          'pdf-to-jpg': {
+            title: 'Konversi PDF ke JPG', subtitle: 'Ubah setiap halaman PDF menjadi gambar JPG berkualitas tinggi',
+            accept: '.pdf,application/pdf', icon: 'fa-file-image', btnText: 'Konversi ke JPG →',
+            btnBg: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20', desc: 'Tarik & lepas satu berkas PDF di sini', btnLabel: 'Pilih Berkas PDF'
+          },
+          'jpg-to-pdf': {
+            title: 'Konversi JPG / PNG ke PDF', subtitle: 'Susun beberapa gambar menjadi satu PDF dan atur urutannya',
+            accept: 'image/jpeg,image/png,.jpg,.jpeg,.png', icon: 'fa-images', btnText: 'Buat PDF dari Gambar →',
+            btnBg: 'bg-yellow-500 hover:bg-yellow-600 shadow-yellow-500/20', desc: 'Tarik & lepas JPG atau PNG di sini', btnLabel: 'Pilih Gambar'
+          },
+          'html-to-pdf': {
+            title: 'Konversi HTML ke PDF', subtitle: 'Render file HTML menjadi dokumen PDF langsung di browser',
+            accept: '.html,.htm,text/html', icon: 'fa-code', btnText: 'Konversi HTML ke PDF →',
+            btnBg: 'bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/20', desc: 'Tarik & lepas satu file HTML di sini', btnLabel: 'Pilih File HTML'
+          },
+          'split-pdf': {
+            title: 'Pisahkan Halaman PDF', subtitle: 'Ambil rentang halaman atau pecah setiap halaman menjadi PDF terpisah',
+            accept: '.pdf,application/pdf', icon: 'fa-scissors', btnText: 'Pisahkan PDF →',
+            btnBg: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20', desc: 'Tarik & lepas satu berkas PDF di sini', btnLabel: 'Pilih Berkas PDF'
+          },
+          'organize-pdf': {
+            title: 'Organize PDF', subtitle: 'Geser, putar, dan hapus halaman sebelum menyimpan PDF',
+            accept: '.pdf,application/pdf', icon: 'fa-arrow-down-a-z', btnText: 'Simpan PDF Terorganisasi →',
+            btnBg: 'bg-fuchsia-600 hover:bg-fuchsia-700 shadow-fuchsia-600/20', desc: 'Pilih satu atau beberapa PDF untuk mengatur halaman', btnLabel: 'Pilih Berkas PDF'
+          },
           'merge': {
             title: 'Penggabung Semua File ke PDF',
             subtitle: 'Gabungkan PDF, Word, Excel, PowerPoint, dan gambar sesuai urutan',
@@ -780,7 +853,8 @@
         const labels = {
           'ocr-ba': 'Smart Scan & OCR', 'pdf-to-word': 'PDF ke Word', 'pdf-to-excel': 'PDF ke Excel',
           'pdf-to-ppt': 'PDF ke PowerPoint', 'word-to-pdf': 'Word ke PDF', 'excel-to-pdf': 'Excel ke PDF',
-          'ppt-to-pdf': 'PowerPoint ke PDF', merge: 'Penggabung Semua File', 'edit-pdf': 'Edit PDF'
+          'ppt-to-pdf': 'PowerPoint ke PDF', 'pdf-to-jpg': 'PDF ke JPG', 'jpg-to-pdf': 'JPG ke PDF',
+          'html-to-pdf': 'HTML ke PDF', 'split-pdf': 'Split PDF', 'organize-pdf': 'Organize PDF', merge: 'Penggabung Semua File', 'edit-pdf': 'Edit PDF'
         };
         const entries = Object.entries(data.byTool || {}).sort((a, b) => b[1] - a[1]);
         const max = Math.max(1, ...entries.map(([, value]) => Number(value || 0)));
@@ -829,7 +903,7 @@
         }
         this.currentTool = toolKey;
         this.pageSettings = this.pageSettingsByTool[toolKey] || {
-          pageSize: toolKey === 'ocr-ba' ? 'a4' : 'original',
+          pageSize: ['ocr-ba', 'html-to-pdf'].includes(toolKey) ? 'a4' : 'original',
           orientation: 'auto',
           placement: 'fit'
         };
@@ -851,6 +925,9 @@
 
         document.getElementById('main-file-input').accept = config.accept;
         document.getElementById('additional-file-input').accept = config.accept;
+        const allowMultiple = ['ocr-ba', 'jpg-to-pdf', 'merge', 'edit-pdf', 'organize-pdf'].includes(toolKey);
+        document.getElementById('main-file-input').multiple = allowMultiple;
+        document.getElementById('additional-file-input').multiple = allowMultiple;
 
         this.renderToolOptions(toolKey);
 
@@ -860,12 +937,12 @@
           document.getElementById('page-order-hint').classList.remove('hidden');
           document.getElementById('page-order-hint').classList.add('flex');
           document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Klik-tahan lalu geser kartu untuk mengubah urutan halaman PDF.';
-        } else if (toolKey === 'edit-pdf') {
+        } else if (toolKey === 'edit-pdf' || toolKey === 'organize-pdf') {
           document.getElementById('ocr-preview-tabs').classList.add('hidden');
           document.getElementById('ocr-preview-tabs').classList.remove('flex');
           document.getElementById('page-order-hint').classList.remove('hidden');
           document.getElementById('page-order-hint').classList.add('flex');
-          document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Tambahkan PDF/gambar, lalu klik-tahan dan geser setiap halaman ke posisi yang diinginkan.';
+          document.getElementById('page-order-hint').innerHTML = toolKey === 'organize-pdf' ? '<i class="fa-solid fa-grip-vertical"></i> Geser halaman, gunakan tombol putar kiri/kanan, atau hapus halaman.' : '<i class="fa-solid fa-grip-vertical"></i> Tambahkan PDF/gambar, lalu klik-tahan dan geser setiap halaman ke posisi yang diinginkan.';
           this.switchPreviewTab('preview');
         } else if (toolKey === 'merge') {
           document.getElementById('ocr-preview-tabs').classList.add('hidden');
@@ -873,6 +950,13 @@
           document.getElementById('page-order-hint').classList.remove('hidden');
           document.getElementById('page-order-hint').classList.add('flex');
           document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Semua format akan menjadi PDF. Klik-tahan lalu geser kartu untuk menentukan urutan halaman/file.';
+          this.switchPreviewTab('preview');
+        } else if (toolKey === 'jpg-to-pdf') {
+          document.getElementById('ocr-preview-tabs').classList.add('hidden');
+          document.getElementById('ocr-preview-tabs').classList.remove('flex');
+          document.getElementById('page-order-hint').classList.remove('hidden');
+          document.getElementById('page-order-hint').classList.add('flex');
+          document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Klik-tahan lalu geser gambar untuk menentukan urutan halaman PDF.';
           this.switchPreviewTab('preview');
         } else {
           document.getElementById('ocr-preview-tabs').classList.add('hidden');
@@ -918,7 +1002,7 @@
           }
           processedFiles.push(fileToProcess);
         }
-        if (this.currentTool === 'edit-pdf') {
+        if (this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
           await this.addEditorFiles(processedFiles);
         } else {
           await this.addFiles(processedFiles);
@@ -939,7 +1023,7 @@
               canvas.width = viewport.width; canvas.height = viewport.height;
               await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
               this.files.push({
-                kind: 'pdf-page', file, pdfBytes: bytes.slice(0), pageIndex,
+                kind: 'pdf-page', file, pdfBytes: bytes.slice(0), pageIndex, rotation: 0,
                 url: canvas.toDataURL('image/jpeg', 0.82),
                 sizeMb: (file.size / 1048576).toFixed(2),
                 sourceName: file.name,
@@ -972,6 +1056,12 @@
         if (this.currentTool === 'ocr-ba') {
           this.runOCRForSelectedFile();
         }
+      }
+
+      rotatePage(index, delta) {
+        if (!this.files[index]) return;
+        this.files[index].rotation = (((this.files[index].rotation || 0) + delta) % 360 + 360) % 360;
+        this.renderFileList();
       }
 
       async waitForOCREngine(timeoutMs = 15000) {
@@ -1118,7 +1208,7 @@
       }
 
       toolProducesPdf(tool = this.currentTool) {
-        return ['ocr-ba', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf', 'merge', 'edit-pdf'].includes(tool);
+        return ['ocr-ba', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf', 'jpg-to-pdf', 'html-to-pdf', 'split-pdf', 'organize-pdf', 'merge', 'edit-pdf'].includes(tool);
       }
 
       setPageSetting(key, value) {
@@ -1230,18 +1320,21 @@
 
             </div>
           `;
-        } else if (tool === 'edit-pdf') {
+        } else if (tool === 'edit-pdf' || tool === 'organize-pdf') {
           optionsContainer.innerHTML = `
             <div class="space-y-3 text-xs">
               <div class="bg-violet-50 p-3.5 rounded-xl border border-violet-200 text-violet-900 leading-relaxed">
                 <p class="font-bold mb-1"><i class="fa-solid fa-layer-group mr-1"></i> Editor halaman aktif</p>
-                <p>Gunakan <b>Tambah PDF / Gambar</b>, lalu geser thumbnail ke posisi yang tepat. Halaman juga dapat dihapus satu per satu.</p>
+                <p>${tool === 'organize-pdf' ? 'Geser kartu, putar halaman ke kiri/kanan, atau hapus halaman.' : 'Gunakan <b>Tambah PDF / Gambar</b>, lalu geser thumbnail ke posisi yang tepat. Halaman juga dapat dihapus satu per satu.'}</p>
               </div>
               <div class="bg-white p-3.5 rounded-xl border border-slate-200">
                 <label class="block font-bold text-slate-800 mb-1.5">Nama PDF hasil edit</label>
-                <input id="opt-edit-filename" value="dokumen_hasil_edit.pdf" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold outline-none focus:border-violet-600">
+                <input id="opt-edit-filename" value="${tool === 'organize-pdf' ? 'dokumen_terorganisasi.pdf' : 'dokumen_hasil_edit.pdf'}" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold outline-none focus:border-violet-600">
               </div>
             </div>`;
+        } else if (tool === 'split-pdf') {
+          const pages = this.files[0]?.previewPageCount || 0;
+          optionsContainer.innerHTML = `<div class="space-y-3 text-xs"><div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5"><p class="font-bold text-rose-900 mb-2"><i class="fa-solid fa-scissors mr-1"></i> Pilihan pemisahan ${pages ? `• ${pages} halaman` : ''}</p><label class="flex gap-2 items-start mb-3"><input type="radio" name="split-mode" value="range" checked class="mt-0.5"><span><b>Ambil halaman/rentang</b><br><span class="text-slate-500">Contoh: 1-3, 5, 8-10</span></span></label><input id="opt-split-range" value="${pages ? `1-${pages}` : '1'}" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono bg-white font-bold" placeholder="1-3, 5"><label class="flex gap-2 items-start mt-3"><input type="radio" name="split-mode" value="all" class="mt-0.5"><span><b>Pisahkan setiap halaman</b><br><span class="text-slate-500">Hasil berupa ZIP berisi PDF per halaman.</span></span></label></div></div>`;
         } else if (tool === 'merge') {
           optionsContainer.innerHTML = `
             <div class="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 space-y-2 text-xs">
@@ -1266,6 +1359,13 @@
               </p>
             </div>
           `;
+        } else if (['pdf-to-jpg', 'jpg-to-pdf', 'html-to-pdf'].includes(tool)) {
+          const notes = {
+            'pdf-to-jpg': 'Setiap halaman dirender menjadi JPG. Jika PDF memiliki lebih dari satu halaman, hasilnya dikemas dalam satu ZIP.',
+            'jpg-to-pdf': 'Semua gambar diproses langsung di perangkat dan disusun mengikuti urutan kartu.',
+            'html-to-pdf': 'File HTML dirender secara lokal. Aset eksternal yang melarang akses lintas domain mungkin tidak tampil.'
+          };
+          optionsContainer.innerHTML = `<div class="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-xs text-slate-700 leading-relaxed"><p class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> Pemrosesan lokal</p><p>${notes[tool]}</p></div>`;
         } else {
           optionsContainer.innerHTML = `<p class="text-xs text-slate-500">Pengaturan optimasi standar telah diterapkan.</p>`;
         }
@@ -1275,7 +1375,7 @@
         } else {
           optionsContainer.insertAdjacentHTML('beforeend', `
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] text-slate-600 leading-relaxed">
-              <i class="fa-solid fa-eye text-brand-600 mr-1"></i> Preview berkas sumber tersedia di panel kiri. Ukuran halaman asli dipertahankan karena hasil fitur ini berupa dokumen Office, bukan PDF.
+              <i class="fa-solid fa-eye text-brand-600 mr-1"></i> Preview berkas sumber tersedia di panel kiri. Pengaturan halaman tidak diperlukan untuk jenis hasil fitur ini.
             </div>`);
         }
         this.updatePreviewLayout();
@@ -1474,7 +1574,7 @@
       renderFileList() {
         const grid = document.getElementById('file-list-grid');
         grid.innerHTML = '';
-        const isSingleConverter = ['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool);
+        const isSingleConverter = ['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf', 'pdf-to-jpg', 'html-to-pdf', 'split-pdf'].includes(this.currentTool);
         grid.className = isSingleConverter
           ? 'grid grid-cols-1 gap-4 max-h-[620px] overflow-y-auto custom-scrollbar p-2 w-full'
           : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-6 max-h-[520px] overflow-y-auto custom-scrollbar p-2 w-full';
@@ -1487,7 +1587,7 @@
           card.className = `relative rounded-2xl border p-3 flex flex-col items-center justify-between cursor-pointer transition-all bg-white shadow-sm ${
             isSelected ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/40' : 'border-slate-200 hover:border-emerald-500'
           }`;
-          card.draggable = ['ocr-ba', 'edit-pdf', 'merge'].includes(this.currentTool) && this.files.length > 1;
+          card.draggable = ['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool) && this.files.length > 1;
           card.dataset.pageIndex = idx;
 
           if (card.draggable) {
@@ -1502,11 +1602,11 @@
           card.onclick = () => this.selectCard(idx);
           
           let previewHtml = '';
-          if (this.currentTool === 'edit-pdf') {
+          if (this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
             previewHtml = `
               <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
                 <span class="absolute top-2 left-2 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.kind === 'pdf-page' ? `PDF ${item.pageIndex + 1}` : 'GAMBAR'}</span>
-                <img src="${item.url}" onload="app.capturePreviewOrientation(this, ${idx})" class="w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'}">
+                <img src="${item.url}" onload="app.capturePreviewOrientation(this, ${idx})" style="transform:rotate(${item.rotation || 0}deg)" class="w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'}">
               </div>`;
           } else if (item.isPdf && this.currentTool !== 'merge') {
             previewHtml = `
@@ -1557,10 +1657,11 @@
             
             <div class="flex items-center justify-between w-full mt-1 pt-2 border-t border-slate-100 px-1">
               <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                ${['ocr-ba', 'edit-pdf', 'merge'].includes(this.currentTool) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
+                ${['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
                 Halaman ${idx + 1}
               </span>
               <div class="flex items-center gap-1">
+                ${this.currentTool === 'organize-pdf' ? `<button onclick="event.stopPropagation(); app.rotatePage(${idx}, -90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-left"></i></button><button onclick="event.stopPropagation(); app.rotatePage(${idx}, 90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
                 <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold transition-colors">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1682,6 +1783,16 @@
             await this.processEditedPDF();
           } else if (this.currentTool === 'merge') {
             await this.processMergePDF();
+          } else if (this.currentTool === 'pdf-to-jpg') {
+            await this.processPDFToJPG();
+          } else if (this.currentTool === 'jpg-to-pdf') {
+            await this.processImagesToPDF();
+          } else if (this.currentTool === 'html-to-pdf') {
+            await this.processHTMLToPDF();
+          } else if (this.currentTool === 'split-pdf') {
+            await this.processSplitPDF();
+          } else if (this.currentTool === 'organize-pdf') {
+            await this.processEditedPDF();
           } else {
             this.setDownloadResult(this.files[0].file, "dokumen_hasil.pdf");
             this.showDownloadScreen();
@@ -1926,6 +2037,110 @@
         this.showDownloadScreen();
       }
 
+      async processPDFToJPG() {
+        const file = this.files[0].file;
+        const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        const zip = new JSZip();
+        let singleBlob = null;
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+          document.getElementById('processing-status').textContent = `Mengubah halaman ${pageNumber} dari ${pdf.numPages} ke JPG...`;
+          document.getElementById('processing-progress-bar').style.width = `${Math.round((pageNumber / pdf.numPages) * 90)}%`;
+          const page = await pdf.getPage(pageNumber);
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+          await page.render({ canvasContext: canvas.getContext('2d', { alpha: false }), viewport, background: '#ffffff' }).promise;
+          const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('Gagal membuat JPG.')), 'image/jpeg', 0.92));
+          singleBlob = blob;
+          zip.file(`halaman-${String(pageNumber).padStart(3, '0')}.jpg`, blob);
+        }
+        const base = file.name.replace(/\.pdf$/i, '') || 'hasil_pdf';
+        if (pdf.numPages === 1) this.setDownloadResult(singleBlob, `${base}.jpg`);
+        else this.setDownloadResult(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), `${base}-jpg.zip`);
+        this.showDownloadScreen();
+      }
+
+      parsePageRange(value, totalPages) {
+        const selected = new Set();
+        for (const token of String(value || '').split(',').map(part => part.trim()).filter(Boolean)) {
+          const match = token.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+          if (!match) throw new Error(`Rentang "${token}" tidak valid. Gunakan contoh: 1-3, 5.`);
+          const start = Number(match[1]); const end = Number(match[2] || match[1]);
+          if (start < 1 || end < start || end > totalPages) throw new Error(`Rentang ${token} di luar jumlah halaman 1-${totalPages}.`);
+          for (let page = start; page <= end; page++) selected.add(page - 1);
+        }
+        if (!selected.size) throw new Error('Masukkan minimal satu nomor halaman.');
+        return [...selected].sort((a, b) => a - b);
+      }
+
+      async processSplitPDF() {
+        const file = this.files[0].file;
+        const source = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+        const mode = document.querySelector('input[name="split-mode"]:checked')?.value || 'range';
+        const base = file.name.replace(/\.pdf$/i, '') || 'dokumen';
+        if (mode === 'all') {
+          const zip = new JSZip();
+          for (let index = 0; index < source.getPageCount(); index++) {
+            const output = await PDFLib.PDFDocument.create();
+            const [page] = await output.copyPages(source, [index]); output.addPage(page);
+            zip.file(`${base}-halaman-${String(index + 1).padStart(3, '0')}.pdf`, await output.save());
+            document.getElementById('processing-progress-bar').style.width = `${Math.round(((index + 1) / source.getPageCount()) * 90)}%`;
+          }
+          this.setDownloadResult(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), `${base}-split.zip`);
+        } else {
+          const indices = this.parsePageRange(document.getElementById('opt-split-range')?.value, source.getPageCount());
+          const output = await PDFLib.PDFDocument.create();
+          const pages = await output.copyPages(source, indices); pages.forEach(page => output.addPage(page));
+          this.setDownloadResult(new Blob([await output.save()], { type: 'application/pdf' }), `${base}-halaman-terpilih.pdf`);
+        }
+        this.showDownloadScreen();
+      }
+
+      async processImagesToPDF() {
+        const pdf = await PDFLib.PDFDocument.create();
+        for (let i = 0; i < this.files.length; i++) {
+          document.getElementById('processing-status').textContent = `Menyusun gambar ${i + 1} dari ${this.files.length}...`;
+          await this.appendImageToDocument(pdf, this.files[i].file);
+          document.getElementById('processing-progress-bar').style.width = `${Math.round(((i + 1) / this.files.length) * 90)}%`;
+        }
+        this.setDownloadResult(new Blob([await pdf.save()], { type: 'application/pdf' }), 'gambar_ke_pdf.pdf');
+        this.showDownloadScreen();
+      }
+
+      async processHTMLToPDF() {
+        const file = this.files[0].file;
+        if (!/\.html?$/i.test(file.name)) throw new Error('Pilih file dengan format .html atau .htm.');
+        document.getElementById('processing-status').textContent = 'Merender tampilan HTML...';
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('sandbox', 'allow-same-origin');
+        iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:1200px;height:900px;border:0;background:white;';
+        document.body.appendChild(iframe);
+        try {
+          const loaded = new Promise((resolve, reject) => { iframe.onload = resolve; setTimeout(() => reject(new Error('HTML terlalu lama dimuat.')), 15000); });
+          iframe.srcdoc = await file.text();
+          await loaded;
+          const body = iframe.contentDocument.body;
+          const width = Math.max(800, iframe.contentDocument.documentElement.scrollWidth, body.scrollWidth);
+          const height = Math.max(1120, iframe.contentDocument.documentElement.scrollHeight, body.scrollHeight);
+          const canvas = await html2canvas(body, { backgroundColor: '#ffffff', scale: 1.5, width, height, useCORS: true, logging: false });
+          const imageBytes = await fetch(canvas.toDataURL('image/jpeg', 0.92)).then(response => response.arrayBuffer());
+          const output = await PDFLib.PDFDocument.create();
+          const [pageWidth, pageHeight] = this.resolvePageDimensions(canvas.width, canvas.height);
+          const sliceHeight = Math.floor(canvas.width * (pageHeight / pageWidth));
+          for (let y = 0; y < canvas.height; y += sliceHeight) {
+            const slice = document.createElement('canvas'); slice.width = canvas.width; slice.height = Math.min(sliceHeight, canvas.height - y);
+            slice.getContext('2d').drawImage(canvas, 0, y, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
+            const part = await output.embedJpg(await fetch(slice.toDataURL('image/jpeg', 0.92)).then(response => response.arrayBuffer()));
+            const page = output.addPage([pageWidth, pageHeight]);
+            const drawnHeight = pageWidth * (slice.height / slice.width);
+            page.drawImage(part, { x: 0, y: pageHeight - drawnHeight, width: pageWidth, height: drawnHeight });
+          }
+          const name = file.name.replace(/\.html?$/i, '') || 'halaman';
+          this.setDownloadResult(new Blob([await output.save()], { type: 'application/pdf' }), `${name}.pdf`);
+          this.showDownloadScreen();
+        } finally { iframe.remove(); }
+      }
+
       async appendPdfToDocument(targetPdf, sourceBytes) {
         const pdfDoc = await PDFLib.PDFDocument.load(sourceBytes);
         const copiedPages = await targetPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
@@ -2010,12 +2225,14 @@
             const original = sourcePage.getSize();
             if (this.pageSettings.pageSize === 'original' && this.pageSettings.orientation === 'auto') {
               const [page] = await output.copyPages(source, [item.pageIndex]);
+              if (item.rotation) page.setRotation(PDFLib.degrees((page.getRotation().angle + item.rotation) % 360));
               output.addPage(page);
             } else {
               const [pageWidth, pageHeight] = this.resolvePageDimensions(original.width, original.height);
               const embedded = await output.embedPage(sourcePage);
               const page = output.addPage([pageWidth, pageHeight]);
               page.drawPage(embedded, this.calculatePlacement(original.width, original.height, pageWidth, pageHeight));
+              if (item.rotation) page.setRotation(PDFLib.degrees(item.rotation));
             }
           } else {
             const bytes = await item.file.arrayBuffer();
