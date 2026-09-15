@@ -292,7 +292,7 @@ async function handleAdminStats(req, res) {
   }
 
   const { day, month } = dateParts();
-  const tools = ["ocr-ba", "pdf-to-word", "pdf-to-excel", "pdf-to-ppt", "word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "merge", "edit-pdf"];
+  const tools = ["ocr-ba", "pdf-to-word", "pdf-to-excel", "pdf-to-ppt", "word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "pdf-to-jpg", "jpg-to-pdf", "html-to-pdf", "split-pdf", "organize-pdf", "merge", "edit-pdf"];
   const recentDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
     date.setUTCDate(date.getUTCDate() - (6 - index));
