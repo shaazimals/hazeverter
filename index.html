@@ -620,10 +620,15 @@
         this.downloadReturnTimer = null;
         this.draggedPageIndex = null;
         this.ocrRequestToken = 0;
+        this.officePdfReady = false;
+        this.officeOutputFilename = '';
         this.pageSettings = {
           pageSize: 'a4',
           orientation: 'auto',
-          placement: 'fit'
+          placement: 'fit',
+          zoom: 100,
+          offsetX: 0,
+          offsetY: 0
         };
         this.pageSettingsByTool = {};
 
@@ -898,6 +903,11 @@
       }
 
       selectTool(toolKey) {
+        const changingTool = this.currentTool !== toolKey;
+        if (changingTool) {
+          this.officePdfReady = false;
+          this.officeOutputFilename = '';
+        }
         if (this.currentTool && this.pageSettings) {
           this.pageSettingsByTool[this.currentTool] = { ...this.pageSettings };
         }
@@ -905,7 +915,7 @@
         this.pageSettings = this.pageSettingsByTool[toolKey] || {
           pageSize: ['ocr-ba', 'html-to-pdf'].includes(toolKey) ? 'a4' : 'original',
           orientation: 'auto',
-          placement: 'fit'
+          placement: 'fit', zoom: 100, offsetX: 0, offsetY: 0
         };
         this.pageSettingsByTool[toolKey] = { ...this.pageSettings };
         const config = this.toolConfig[toolKey];
@@ -925,7 +935,7 @@
 
         document.getElementById('main-file-input').accept = config.accept;
         document.getElementById('additional-file-input').accept = config.accept;
-        const allowMultiple = ['ocr-ba', 'jpg-to-pdf', 'merge', 'edit-pdf', 'organize-pdf'].includes(toolKey);
+        const allowMultiple = ['ocr-ba', 'jpg-to-pdf', 'merge', 'edit-pdf', 'organize-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'split-pdf'].includes(toolKey);
         document.getElementById('main-file-input').multiple = allowMultiple;
         document.getElementById('additional-file-input').multiple = allowMultiple;
 
@@ -957,6 +967,13 @@
           document.getElementById('page-order-hint').classList.remove('hidden');
           document.getElementById('page-order-hint').classList.add('flex');
           document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Klik-tahan lalu geser gambar untuk menentukan urutan halaman PDF.';
+          this.switchPreviewTab('preview');
+        } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'split-pdf'].includes(toolKey)) {
+          document.getElementById('ocr-preview-tabs').classList.add('hidden');
+          document.getElementById('ocr-preview-tabs').classList.remove('flex');
+          document.getElementById('page-order-hint').classList.remove('hidden');
+          document.getElementById('page-order-hint').classList.add('flex');
+          document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Setelah PDF dipilih, geser, putar, hapus, dan atur posisi setiap halaman sebelum diproses.';
           this.switchPreviewTab('preview');
         } else {
           document.getElementById('ocr-preview-tabs').classList.add('hidden');
@@ -1002,7 +1019,7 @@
           }
           processedFiles.push(fileToProcess);
         }
-        if (this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
+        if (this.officePdfReady || ['edit-pdf', 'organize-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'split-pdf'].includes(this.currentTool)) {
           await this.addEditorFiles(processedFiles);
         } else {
           await this.addFiles(processedFiles);
@@ -1208,7 +1225,7 @@
       }
 
       toolProducesPdf(tool = this.currentTool) {
-        return ['ocr-ba', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf', 'jpg-to-pdf', 'html-to-pdf', 'split-pdf', 'organize-pdf', 'merge', 'edit-pdf'].includes(tool);
+        return ['ocr-ba', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf', 'jpg-to-pdf', 'html-to-pdf', 'split-pdf', 'organize-pdf', 'merge', 'edit-pdf'].includes(tool);
       }
 
       setPageSetting(key, value) {
@@ -1223,7 +1240,7 @@
         const size = this.pageSettings.pageSize === 'original' ? 'Ukuran asli' : this.pageSettings.pageSize.toUpperCase();
         const orientation = this.pageSettings.orientation === 'auto' ? 'orientasi otomatis' : (this.pageSettings.orientation === 'portrait' ? 'portrait' : 'landscape');
         const placement = this.pageSettings.placement === 'fit' ? 'Fit — halaman utuh' : 'Fill — memenuhi halaman';
-        return `${size}, ${orientation}, ${placement}`;
+        return `${size}, ${orientation}, ${placement}, zoom ${Number(this.pageSettings.zoom || 100)}%, posisi X ${Number(this.pageSettings.offsetX || 0)}, Y ${Number(this.pageSettings.offsetY || 0)}`;
       }
 
       pageOptionsMarkup() {
@@ -1261,6 +1278,12 @@
               </div>
               <p class="mt-2 text-[10px] leading-relaxed text-slate-500"><b>Fit</b> disarankan agar isi tidak terpotong. <b>Fill</b> memenuhi halaman tetapi dapat memotong tepi.</p>
             </div>
+            <div class="grid grid-cols-1 gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <label class="block"><span class="flex justify-between text-[10px] font-bold text-slate-600"><span>ZOOM ISI</span><span>${Number(s.zoom || 100)}%</span></span><input type="range" min="50" max="180" step="5" value="${Number(s.zoom || 100)}" oninput="app.setPageSetting('zoom', Number(this.value)); this.previousElementSibling.lastElementChild.textContent=this.value+'%'" class="w-full accent-emerald-600"></label>
+              <label class="block"><span class="flex justify-between text-[10px] font-bold text-slate-600"><span>GESER KIRI / KANAN</span><span>${Number(s.offsetX || 0)}</span></span><input type="range" min="-50" max="50" step="1" value="${Number(s.offsetX || 0)}" oninput="app.setPageSetting('offsetX', Number(this.value)); this.previousElementSibling.lastElementChild.textContent=this.value" class="w-full accent-emerald-600"></label>
+              <label class="block"><span class="flex justify-between text-[10px] font-bold text-slate-600"><span>GESER ATAS / BAWAH</span><span>${Number(s.offsetY || 0)}</span></span><input type="range" min="-50" max="50" step="1" value="${Number(s.offsetY || 0)}" oninput="app.setPageSetting('offsetY', Number(this.value)); this.previousElementSibling.lastElementChild.textContent=this.value" class="w-full accent-emerald-600"></label>
+              <button type="button" onclick="app.resetPagePosition()" class="py-2 rounded-lg border border-slate-300 bg-white font-bold text-slate-600 hover:bg-slate-100"><i class="fa-solid fa-rotate-left mr-1"></i> Reset Posisi & Zoom</button>
+            </div>
             <div id="layout-preview-note" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-semibold text-slate-600">${this.getLayoutSummary()}</div>
           </div>`;
       }
@@ -1271,13 +1294,23 @@
         return 'portrait';
       }
 
+      resetPagePosition() {
+        this.pageSettings.zoom = 100; this.pageSettings.offsetX = 0; this.pageSettings.offsetY = 0;
+        this.pageSettingsByTool[this.currentTool] = { ...this.pageSettings };
+        this.renderToolOptions(this.currentTool); this.updatePreviewLayout();
+      }
+
       updatePreviewLayout() {
         document.querySelectorAll('.page-preview-sheet').forEach((sheet) => {
           const idx = Number(sheet.dataset.itemIndex || 0);
           const orientation = this.getPreviewOrientation(this.files[idx]);
           sheet.dataset.orientation = orientation;
           const img = sheet.querySelector('img');
-          if (img) img.className = `w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'} ${this.currentTool === 'ocr-ba' && this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}`;
+          if (img) {
+            img.className = `w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'} ${this.currentTool === 'ocr-ba' && this.scanMode === 'grayscale' ? 'filter-grayscale-scan' : ''}`;
+            const rotation = Number(this.files[idx]?.rotation || 0);
+            img.style.transform = `translate(${Number(this.pageSettings.offsetX || 0)}%, ${Number(this.pageSettings.offsetY || 0)}%) scale(${Number(this.pageSettings.zoom || 100) / 100}) rotate(${rotation}deg)`;
+          }
         });
       }
 
@@ -1333,7 +1366,7 @@
               </div>
             </div>`;
         } else if (tool === 'split-pdf') {
-          const pages = this.files[0]?.previewPageCount || 0;
+          const pages = this.files[0]?.kind === 'pdf-page' ? this.files.length : (this.files[0]?.previewPageCount || 0);
           optionsContainer.innerHTML = `<div class="space-y-3 text-xs"><div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5"><p class="font-bold text-rose-900 mb-2"><i class="fa-solid fa-scissors mr-1"></i> Pilihan pemisahan ${pages ? `• ${pages} halaman` : ''}</p><label class="flex gap-2 items-start mb-3"><input type="radio" name="split-mode" value="range" checked class="mt-0.5"><span><b>Ambil halaman/rentang</b><br><span class="text-slate-500">Contoh: 1-3, 5, 8-10</span></span></label><input id="opt-split-range" value="${pages ? `1-${pages}` : '1'}" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono bg-white font-bold" placeholder="1-3, 5"><label class="flex gap-2 items-start mt-3"><input type="radio" name="split-mode" value="all" class="mt-0.5"><span><b>Pisahkan setiap halaman</b><br><span class="text-slate-500">Hasil berupa ZIP berisi PDF per halaman.</span></span></label></div></div>`;
         } else if (tool === 'merge') {
           optionsContainer.innerHTML = `
@@ -1348,7 +1381,11 @@
               </div>
             </div>`;
         } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(tool)) {
-          optionsContainer.innerHTML = `
+          optionsContainer.innerHTML = this.officePdfReady ? `
+            <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 space-y-2 text-xs">
+              <div class="flex items-center gap-2 text-emerald-900 font-bold"><i class="fa-solid fa-circle-check"></i><span>Konversi Adobe selesai — atur halaman sebelum menyimpan</span></div>
+              <p class="text-slate-600">Geser urutan, putar, hapus, ubah ukuran, zoom, atau pindahkan posisi isi. Setelah selesai klik tombol simpan PDF.</p>
+            </div>` : `
             <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 space-y-3 text-xs">
               <div class="flex items-center gap-2 text-blue-900 font-bold">
                 <i class="fa-solid fa-cloud p-1.5 bg-blue-600 text-white rounded-lg"></i>
@@ -1587,7 +1624,7 @@
           card.className = `relative rounded-2xl border p-3 flex flex-col items-center justify-between cursor-pointer transition-all bg-white shadow-sm ${
             isSelected ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/40' : 'border-slate-200 hover:border-emerald-500'
           }`;
-          card.draggable = ['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool) && this.files.length > 1;
+          card.draggable = (item.kind === 'pdf-page' || ['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool)) && this.files.length > 1;
           card.dataset.pageIndex = idx;
 
           if (card.draggable) {
@@ -1602,7 +1639,7 @@
           card.onclick = () => this.selectCard(idx);
           
           let previewHtml = '';
-          if (this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
+          if (item.kind === 'pdf-page' || this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
             previewHtml = `
               <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
                 <span class="absolute top-2 left-2 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.kind === 'pdf-page' ? `PDF ${item.pageIndex + 1}` : 'GAMBAR'}</span>
@@ -1657,11 +1694,11 @@
             
             <div class="flex items-center justify-between w-full mt-1 pt-2 border-t border-slate-100 px-1">
               <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                ${['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
+                ${(item.kind === 'pdf-page' || ['ocr-ba', 'edit-pdf', 'organize-pdf', 'merge', 'jpg-to-pdf'].includes(this.currentTool)) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
                 Halaman ${idx + 1}
               </span>
               <div class="flex items-center gap-1">
-                ${this.currentTool === 'organize-pdf' ? `<button onclick="event.stopPropagation(); app.rotatePage(${idx}, -90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-left"></i></button><button onclick="event.stopPropagation(); app.rotatePage(${idx}, 90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
+                ${(item.kind === 'pdf-page' || ['ocr-ba', 'jpg-to-pdf', 'edit-pdf', 'organize-pdf'].includes(this.currentTool)) ? `<button onclick="event.stopPropagation(); app.rotatePage(${idx}, -90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-left"></i></button><button onclick="event.stopPropagation(); app.rotatePage(${idx}, 90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
                 <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold transition-colors">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1770,6 +1807,7 @@
 
       async processTool() {
         if (this.files.length === 0) return alert('Pilih setidaknya satu berkas untuk diproses.');
+        const finishingOfficeAdjustment = this.officePdfReady && ['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool);
 
         document.getElementById('view-workspace').classList.add('hidden');
         document.getElementById('view-processing').classList.remove('hidden');
@@ -1777,7 +1815,9 @@
         try {
           if (this.currentTool === 'ocr-ba') {
             await this.processSmartScanPDF();
-        } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool)) {
+          } else if (this.officePdfReady && ['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool)) {
+            await this.processEditedPDF();
+          } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool)) {
             await this.processCloudConversion(this.currentTool);
           } else if (this.currentTool === 'edit-pdf') {
             await this.processEditedPDF();
@@ -1797,7 +1837,7 @@
             this.setDownloadResult(this.files[0].file, "dokumen_hasil.pdf");
             this.showDownloadScreen();
           }
-          await this.trackToolRun(this.currentTool);
+          if (!finishingOfficeAdjustment) await this.trackToolRun(this.currentTool);
         } catch (error) {
           console.error("Client Process Error:", error);
           alert('GAGAL PROSES: ' + error.message);
@@ -1828,13 +1868,16 @@
         const ratio = this.pageSettings.placement === 'fill'
           ? Math.max(pageWidth / contentWidth, pageHeight / contentHeight)
           : Math.min(pageWidth / contentWidth, pageHeight / contentHeight);
-        const width = contentWidth * ratio;
-        const height = contentHeight * ratio;
-        return { width, height, x: (pageWidth - width) / 2, y: (pageHeight - height) / 2 };
+        const zoom = Math.max(0.5, Number(this.pageSettings.zoom || 100) / 100);
+        const width = contentWidth * ratio * zoom;
+        const height = contentHeight * ratio * zoom;
+        const x = (pageWidth - width) / 2 + pageWidth * (Number(this.pageSettings.offsetX || 0) / 100);
+        const y = (pageHeight - height) / 2 - pageHeight * (Number(this.pageSettings.offsetY || 0) / 100);
+        return { width, height, x, y };
       }
 
       async normalizePdfBlob(blob) {
-        if (this.pageSettings.pageSize === 'original' && this.pageSettings.orientation === 'auto') return blob;
+        if (this.pageSettings.pageSize === 'original' && this.pageSettings.orientation === 'auto' && Number(this.pageSettings.zoom || 100) === 100 && !Number(this.pageSettings.offsetX || 0) && !Number(this.pageSettings.offsetY || 0)) return blob;
         const source = await PDFLib.PDFDocument.load(await blob.arrayBuffer());
         const output = await PDFLib.PDFDocument.create();
         for (const sourcePage of source.getPages()) {
@@ -1845,6 +1888,35 @@
           const page = output.addPage([pageWidth, pageHeight]);
           page.drawPage(embedded, placement);
         }
+        return new Blob([await output.save()], { type: 'application/pdf' });
+      }
+
+      async buildAdjustedPDFBlob(items = this.files) {
+        const output = await PDFLib.PDFDocument.create();
+        for (const item of items) {
+          if (item.kind === 'pdf-page') {
+            const source = await PDFLib.PDFDocument.load(item.pdfBytes.slice(0));
+            const sourcePage = source.getPage(item.pageIndex);
+            const original = sourcePage.getSize();
+            const [pageWidth, pageHeight] = this.resolvePageDimensions(original.width, original.height);
+            const embedded = await output.embedPage(sourcePage);
+            const page = output.addPage([pageWidth, pageHeight]);
+            page.drawPage(embedded, this.calculatePlacement(original.width, original.height, pageWidth, pageHeight));
+            if (item.rotation) page.setRotation(PDFLib.degrees(item.rotation));
+          } else if (item.file?.type?.startsWith('image/')) {
+            await this.appendImageToDocument(output, item.file, item.rotation || 0);
+          } else if (item.file && (item.isPdf || item.file.name.toLowerCase().endsWith('.pdf'))) {
+            const source = await PDFLib.PDFDocument.load(await item.file.arrayBuffer());
+            for (const sourcePage of source.getPages()) {
+              const original = sourcePage.getSize();
+              const [pageWidth, pageHeight] = this.resolvePageDimensions(original.width, original.height);
+              const embedded = await output.embedPage(sourcePage);
+              const page = output.addPage([pageWidth, pageHeight]);
+              page.drawPage(embedded, this.calculatePlacement(original.width, original.height, pageWidth, pageHeight));
+            }
+          }
+        }
+        if (!output.getPageCount()) throw new Error('Tidak ada halaman yang dapat diproses.');
         return new Blob([await output.save()], { type: 'application/pdf' });
       }
 
@@ -1888,6 +1960,7 @@
           const [pageWidth, pageHeight] = this.resolvePageDimensions(original.width, original.height);
           const page = pdf.addPage([pageWidth, pageHeight]);
           page.drawImage(embeddedImage, this.calculatePlacement(original.width, original.height, pageWidth, pageHeight));
+          if (this.files[i].rotation) page.setRotation(PDFLib.degrees(this.files[i].rotation));
         }
 
         document.getElementById('processing-progress-bar').style.width = '100%';
@@ -1952,7 +2025,12 @@
         }
 
         const formData = new FormData();
-        formData.append('file', this.files[0].file);
+        let uploadFile = this.files[0].file;
+        if (conversionType.startsWith('pdf-to-')) {
+          const adjustedPdf = await this.buildAdjustedPDFBlob();
+          uploadFile = new File([adjustedPdf], this.files[0].sourceName || this.files[0].file.name, { type: 'application/pdf' });
+        }
+        formData.append('file', uploadFile);
         formData.append('format', config.format);
         formData.append('conversionType', conversionType);
 
@@ -1997,13 +2075,29 @@
           );
         }
 
-        if (config.resultKind === 'pdf') {
+        if (config.resultKind === 'pdf' && !['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
           document.getElementById('processing-status').textContent = 'Menyesuaikan ukuran dan orientasi halaman...';
           blob = await this.normalizePdfBlob(blob);
         }
         
         const originalName = this.files[0].file.name.replace(/\.[^/.]+$/, "");
         const outputFilename = `${originalName}.${config.extension}`;
+
+        if (['word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(conversionType)) {
+          this.officeOutputFilename = outputFilename;
+          this.clearFiles();
+          this.officePdfReady = true;
+          await this.addEditorFiles([new File([blob], outputFilename, { type: 'application/pdf' })]);
+          document.getElementById('main-file-input').accept = '.pdf,application/pdf';
+          document.getElementById('additional-file-input').accept = '.pdf,application/pdf';
+          document.getElementById('main-file-input').multiple = true;
+          document.getElementById('additional-file-input').multiple = true;
+          document.getElementById('process-btn-text').textContent = 'Simpan PDF Setelah Penyesuaian →';
+          document.getElementById('processing-status').textContent = 'PDF siap diatur.';
+          document.getElementById('view-processing').classList.add('hidden');
+          document.getElementById('view-workspace').classList.remove('hidden');
+          return;
+        }
 
         this.setDownloadResult(blob, outputFilename);
         this.showDownloadScreen();
@@ -2025,7 +2119,7 @@
             const convertedPdf = await this.convertOfficeFileForMerge(file);
             await this.appendPdfToDocument(mergedPdf, await convertedPdf.arrayBuffer());
           } else if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(lowerName)) {
-            await this.appendImageToDocument(mergedPdf, file);
+            await this.appendImageToDocument(mergedPdf, file, item.rotation || 0);
           } else {
             throw new Error(`Format ${file.name} belum didukung untuk penggabungan.`);
           }
@@ -2039,7 +2133,8 @@
 
       async processPDFToJPG() {
         const file = this.files[0].file;
-        const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        const adjustedPdf = await this.buildAdjustedPDFBlob();
+        const pdf = await pdfjsLib.getDocument({ data: await adjustedPdf.arrayBuffer() }).promise;
         const zip = new JSZip();
         let singleBlob = null;
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
@@ -2075,7 +2170,7 @@
 
       async processSplitPDF() {
         const file = this.files[0].file;
-        const source = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+        const source = await PDFLib.PDFDocument.load(await (await this.buildAdjustedPDFBlob()).arrayBuffer());
         const mode = document.querySelector('input[name="split-mode"]:checked')?.value || 'range';
         const base = file.name.replace(/\.pdf$/i, '') || 'dokumen';
         if (mode === 'all') {
@@ -2100,7 +2195,7 @@
         const pdf = await PDFLib.PDFDocument.create();
         for (let i = 0; i < this.files.length; i++) {
           document.getElementById('processing-status').textContent = `Menyusun gambar ${i + 1} dari ${this.files.length}...`;
-          await this.appendImageToDocument(pdf, this.files[i].file);
+          await this.appendImageToDocument(pdf, this.files[i].file, this.files[i].rotation || 0);
           document.getElementById('processing-progress-bar').style.width = `${Math.round(((i + 1) / this.files.length) * 90)}%`;
         }
         this.setDownloadResult(new Blob([await pdf.save()], { type: 'application/pdf' }), 'gambar_ke_pdf.pdf');
@@ -2132,8 +2227,7 @@
             slice.getContext('2d').drawImage(canvas, 0, y, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
             const part = await output.embedJpg(await fetch(slice.toDataURL('image/jpeg', 0.92)).then(response => response.arrayBuffer()));
             const page = output.addPage([pageWidth, pageHeight]);
-            const drawnHeight = pageWidth * (slice.height / slice.width);
-            page.drawImage(part, { x: 0, y: pageHeight - drawnHeight, width: pageWidth, height: drawnHeight });
+            page.drawImage(part, this.calculatePlacement(slice.width, slice.height, pageWidth, pageHeight));
           }
           const name = file.name.replace(/\.html?$/i, '') || 'halaman';
           this.setDownloadResult(new Blob([await output.save()], { type: 'application/pdf' }), `${name}.pdf`);
@@ -2147,7 +2241,7 @@
         copiedPages.forEach(page => targetPdf.addPage(page));
       }
 
-      async appendImageToDocument(targetPdf, file) {
+      async appendImageToDocument(targetPdf, file, rotation = 0) {
         let bytes = await file.arrayBuffer();
         let embedded;
         const lowerName = file.name.toLowerCase();
@@ -2180,6 +2274,7 @@
         const [pageWidth, pageHeight] = this.resolvePageDimensions(dims.width, dims.height);
         const page = targetPdf.addPage([pageWidth, pageHeight]);
         page.drawImage(embedded, this.calculatePlacement(dims.width, dims.height, pageWidth, pageHeight));
+        if (rotation) page.setRotation(PDFLib.degrees(rotation));
       }
 
       async convertOfficeFileForMerge(file) {
@@ -2223,7 +2318,7 @@
             const source = await PDFLib.PDFDocument.load(item.pdfBytes.slice(0));
             const sourcePage = source.getPage(item.pageIndex);
             const original = sourcePage.getSize();
-            if (this.pageSettings.pageSize === 'original' && this.pageSettings.orientation === 'auto') {
+            if (this.pageSettings.pageSize === 'original' && this.pageSettings.orientation === 'auto' && Number(this.pageSettings.zoom || 100) === 100 && !Number(this.pageSettings.offsetX || 0) && !Number(this.pageSettings.offsetY || 0)) {
               const [page] = await output.copyPages(source, [item.pageIndex]);
               if (item.rotation) page.setRotation(PDFLib.degrees((page.getRotation().angle + item.rotation) % 360));
               output.addPage(page);
@@ -2242,12 +2337,14 @@
             const [pageWidth, pageHeight] = this.resolvePageDimensions(dims.width, dims.height);
             const page = output.addPage([pageWidth, pageHeight]);
             page.drawImage(image, this.calculatePlacement(dims.width, dims.height, pageWidth, pageHeight));
+            if (item.rotation) page.setRotation(PDFLib.degrees(item.rotation));
           }
           document.getElementById('processing-progress-bar').style.width = `${20 + Math.round(((i + 1) / this.files.length) * 75)}%`;
         }
         const bytes = await output.save();
-        let filename = document.getElementById('opt-edit-filename')?.value.trim() || 'dokumen_hasil_edit.pdf';
+        let filename = document.getElementById('opt-edit-filename')?.value.trim() || this.officeOutputFilename || 'dokumen_hasil_edit.pdf';
         if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+        if (this.officePdfReady) this.officePdfReady = false;
         this.setDownloadResult(new Blob([bytes], { type: 'application/pdf' }), filename);
         document.getElementById('processing-progress-bar').style.width = '100%';
         this.showDownloadScreen();
