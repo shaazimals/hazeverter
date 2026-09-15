@@ -52,6 +52,8 @@
     }
     .tool-card { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
     .tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -6px rgba(5, 150, 105, 0.15); }
+    .tool-card:active { transform: scale(0.97); }
+    .tool-card:focus-visible { outline: 3px solid rgba(16, 185, 129, .35); outline-offset: 3px; }
     @keyframes scanLaser {
       0% { top: 0%; opacity: 0.8; }
       50% { opacity: 1; }
@@ -74,6 +76,21 @@
     .page-preview-sheet { transition: width .2s ease, aspect-ratio .2s ease; }
     .page-preview-sheet[data-orientation="portrait"] { aspect-ratio: 210 / 297; }
     .page-preview-sheet[data-orientation="landscape"] { aspect-ratio: 297 / 210; }
+    @media (max-width: 639px) {
+      #view-home { padding-top: 1.75rem; padding-left: .75rem; padding-right: .75rem; }
+      #view-home > div:first-child { margin-bottom: 1.75rem; }
+      #view-home h1 { font-size: 1.75rem; line-height: 2.15rem; }
+      #view-home > div:first-child > p { font-size: .82rem; line-height: 1.3rem; }
+      #view-home .tool-card { padding: 1rem; border-radius: 1rem; min-height: 190px; }
+      #view-home .tool-card > div:first-child > div.w-12 { width: 2.5rem; height: 2.5rem; margin-bottom: .75rem; border-radius: .75rem; }
+      #view-home .tool-card > div:first-child > div.w-12 i { font-size: 1.15rem; }
+      #view-home .tool-card h3 { font-size: .94rem; line-height: 1.2rem; }
+      #view-home .tool-card p { font-size: .68rem; line-height: 1.05rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+      #view-home .tool-card > div:last-child { margin-top: 1rem; font-size: .65rem; }
+      #view-home .tool-card:first-child { min-height: 220px; padding: 1.15rem; }
+      #view-home .tool-card:first-child h3 { font-size: 1.25rem; line-height: 1.5rem; }
+      #view-home .tool-card:first-child p { font-size: .72rem; line-height: 1.15rem; -webkit-line-clamp: 3; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
@@ -121,10 +138,10 @@
       </div>
 
       <!-- GRID FITUR LENGKAP -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         
         <!-- FEATURED: SMART SCANNER -->
-        <div onclick="app.selectTool('ocr-ba')" class="tool-card bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl cursor-pointer flex flex-col justify-between group relative overflow-hidden sm:col-span-2">
+        <div onclick="app.selectTool('ocr-ba')" class="tool-card bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl cursor-pointer flex flex-col justify-between group relative overflow-hidden col-span-2">
           <div class="absolute -right-4 -bottom-4 text-white/5 text-9xl font-extrabold pointer-events-none">A4</div>
           <div>
             <div class="w-12 h-12 bg-white/10 backdrop-blur border border-white/20 text-brand-500 rounded-xl flex items-center justify-center mb-4">
@@ -135,7 +152,7 @@
               <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
             </div>
             <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
-              Konversi foto fisik / HEIC menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
+              Konversi foto fisik / HEIC iPhone menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
             </p>
           </div>
           <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
@@ -251,8 +268,8 @@
             <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
               <i class="fa-solid fa-object-group text-2xl"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">Penggabung PDF</h3>
-            <p class="text-xs text-slate-500 leading-relaxed">Satukan beberapa berkas PDF menjadi satu dokumen tunggal secara aman.</p>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Penggabung Semua File</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">Gabungkan PDF, Word, Excel, PowerPoint, dan gambar menjadi satu PDF sesuai urutan.</p>
           </div>
           <div class="mt-6 text-indigo-600 font-semibold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Pilih Berkas <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -273,6 +290,62 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- PRIVATE ADMIN DASHBOARD -->
+    <section id="view-admin" class="hidden py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <p class="text-[11px] font-extrabold tracking-[0.2em] text-brand-600 uppercase">Private Analytics</p>
+          <h1 class="text-3xl font-extrabold text-slate-900 mt-1">Dashboard Pemilik Hazeverter</h1>
+          <p class="text-sm text-slate-500 mt-2">Statistik ini hanya dapat dibuka menggunakan password admin.</p>
+        </div>
+        <button onclick="app.adminLogout()" type="button" class="hidden" id="admin-logout-btn"></button>
+      </div>
+
+      <div id="admin-login-card" class="max-w-md mx-auto bg-white border border-slate-200 shadow-xl rounded-3xl p-7">
+        <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl mb-5"><i class="fa-solid fa-lock"></i></div>
+        <h2 class="text-xl font-extrabold text-slate-900">Masuk sebagai pemilik</h2>
+        <p class="text-xs text-slate-500 mt-2 mb-5">Masukkan password dari pengaturan Vercel.</p>
+        <form onsubmit="event.preventDefault(); app.loadAdminStats()" class="space-y-3">
+          <input id="admin-password" type="password" autocomplete="current-password" placeholder="Password admin" class="w-full p-3.5 rounded-xl border border-slate-300 outline-none focus:border-brand-600 text-sm">
+          <button id="admin-login-btn" type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl"><i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Buka Dashboard</button>
+          <p id="admin-login-error" class="hidden text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 rounded-xl p-3"></p>
+        </form>
+      </div>
+
+      <div id="admin-dashboard-content" class="hidden space-y-6">
+        <div class="flex justify-end">
+          <button onclick="app.adminLogout()" type="button" class="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 px-4 py-2 rounded-xl"><i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar Admin</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><p class="text-xs font-bold text-slate-500">PENGUNJUNG HARI INI</p><p id="stat-visitors-today" class="text-3xl font-black text-slate-900 mt-2">0</p></div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><p class="text-xs font-bold text-slate-500">TOTAL PENGUNJUNG</p><p id="stat-visitors-total" class="text-3xl font-black text-slate-900 mt-2">0</p></div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><p class="text-xs font-bold text-slate-500">PROSES BULAN INI</p><p id="stat-processes-month" class="text-3xl font-black text-indigo-600 mt-2">0</p></div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><p class="text-xs font-bold text-slate-500">TOTAL PROSES</p><p id="stat-processes-total" class="text-3xl font-black text-indigo-600 mt-2">0</p></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-slate-950 text-white rounded-3xl p-6 shadow-xl">
+            <div class="flex justify-between items-start gap-4">
+              <div><p class="text-xs font-bold text-emerald-300">SISA LIMIT ADOBE</p><p id="stat-adobe-remaining" class="text-4xl font-black mt-2">—</p></div>
+              <div class="text-right"><p id="stat-adobe-used" class="text-sm font-bold">0 digunakan</p><p id="stat-adobe-limit" class="text-xs text-slate-400 mt-1">Limit belum diatur</p></div>
+            </div>
+            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden mt-6"><div id="stat-adobe-bar" class="h-full bg-gradient-to-r from-emerald-500 to-amber-400 w-0 transition-all"></div></div>
+            <p class="text-[10px] text-slate-400 mt-3">Dihitung dari job Adobe yang berhasil pada bulan berjalan.</p>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <h3 class="font-extrabold text-slate-900">Pemakaian per fitur bulan ini</h3>
+            <div id="stat-tools-list" class="mt-4 space-y-2"></div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+          <h3 class="font-extrabold text-slate-900">Pengunjung 7 hari terakhir</h3>
+          <div id="stat-daily-visitors" class="mt-6 grid grid-cols-7 gap-2 items-end h-48"></div>
+        </div>
       </div>
     </section>
 
@@ -455,10 +528,14 @@
         <h2 id="success-heading" class="text-2xl font-extrabold text-slate-900 mb-2">Dokumen Selesai Diproses!</h2>
         <p id="success-message" class="text-sm text-slate-500 mb-6">Dokumen telah berhasil diolah dan siap untuk diunduh.</p>
 
-        <a id="download-file-link" href="#" download="dokumen.pdf" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-3 text-lg mb-4 cursor-pointer active:scale-95">
+        <a id="download-file-link" onclick="app.handleDownloadClick()" href="#" download="dokumen.pdf" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-3 text-lg mb-3 cursor-pointer active:scale-95">
           <i class="fa-solid fa-download"></i>
           <span id="download-btn-label">Unduh Dokumen Hasil</span>
         </a>
+
+        <button id="continue-tool-btn" onclick="app.continueCurrentTool()" type="button" class="w-full bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 font-bold py-3 px-6 rounded-xl transition-colors text-sm mb-3">
+          Proses File Lain di Fitur Ini
+        </button>
 
         <button onclick="app.resetState()" type="button" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-colors text-sm">
           Kembali ke Beranda Fitur
@@ -492,6 +569,7 @@
         this.currentCroppingIndex = null;
         this.scanMode = 'color';
         this.detectedBaNumber = '';
+        this.downloadReturnTimer = null;
         this.draggedPageIndex = null;
         this.ocrRequestToken = 0;
         this.pageSettings = {
@@ -573,14 +651,14 @@
             btnLabel: 'Pilih Berkas PowerPoint'
           },
           'merge': {
-            title: 'Penggabung Berkas PDF',
-            subtitle: 'Satukan beberapa dokumen PDF sesuai urutan keinginan Anda',
-            accept: '.pdf',
+            title: 'Penggabung Semua File ke PDF',
+            subtitle: 'Gabungkan PDF, Word, Excel, PowerPoint, dan gambar sesuai urutan',
+            accept: '.pdf,.docx,.xlsx,.pptx,image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
             icon: 'fa-object-group',
-            btnText: 'Gabungkan PDF Sekarang →',
+            btnText: 'Gabungkan Semua File ke PDF →',
             btnBg: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20',
-            desc: 'Tarik & lepas berkas PDF di sini',
-            btnLabel: 'Pilih Berkas PDF'
+            desc: 'Tarik & lepas PDF, DOCX, XLSX, PPTX, atau gambar di sini',
+            btnLabel: 'Pilih Semua Jenis File'
           },
           'edit-pdf': {
             title: 'Edit & Sisipkan Halaman PDF',
@@ -595,6 +673,20 @@
         };
 
         this.initDragAndDrop();
+        this.initInteractiveCards();
+      }
+
+      initInteractiveCards() {
+        document.querySelectorAll('#view-home .tool-card').forEach(card => {
+          card.setAttribute('role', 'button');
+          card.setAttribute('tabindex', '0');
+          card.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              card.click();
+            }
+          });
+        });
       }
 
       initDragAndDrop() {
@@ -623,10 +715,112 @@
 
       showHome() {
         document.getElementById('view-home').classList.remove('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
         document.getElementById('view-workspace').classList.add('hidden');
         document.getElementById('view-processing').classList.add('hidden');
         document.getElementById('view-download').classList.add('hidden');
         this.clearFiles();
+      }
+
+      showAdminLogin() {
+        document.getElementById('view-home').classList.add('hidden');
+        document.getElementById('view-workspace').classList.add('hidden');
+        document.getElementById('view-processing').classList.add('hidden');
+        document.getElementById('view-download').classList.add('hidden');
+        document.getElementById('view-admin').classList.remove('hidden');
+        document.getElementById('admin-login-card').classList.remove('hidden');
+        document.getElementById('admin-dashboard-content').classList.add('hidden');
+        setTimeout(() => document.getElementById('admin-password')?.focus(), 50);
+      }
+
+      async loadAdminStats() {
+        const password = document.getElementById('admin-password')?.value || '';
+        const button = document.getElementById('admin-login-btn');
+        const errorBox = document.getElementById('admin-login-error');
+        if (!password) {
+          errorBox.textContent = 'Masukkan password admin.';
+          errorBox.classList.remove('hidden');
+          return;
+        }
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin mr-2"></i>Memuat statistik...';
+        errorBox.classList.add('hidden');
+        try {
+          const response = await fetch('/api/convert?admin=stats', {
+            method: 'GET',
+            headers: { 'x-admin-password': password },
+            cache: 'no-store'
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'Dashboard gagal dimuat.');
+          this.adminPassword = password;
+          this.renderAdminStats(data);
+          document.getElementById('admin-login-card').classList.add('hidden');
+          document.getElementById('admin-dashboard-content').classList.remove('hidden');
+        } catch (error) {
+          errorBox.textContent = error.message;
+          errorBox.classList.remove('hidden');
+        } finally {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Buka Dashboard';
+        }
+      }
+
+      renderAdminStats(data) {
+        const number = value => new Intl.NumberFormat('id-ID').format(Number(value || 0));
+        document.getElementById('stat-visitors-today').textContent = number(data.visitors?.today);
+        document.getElementById('stat-visitors-total').textContent = number(data.visitors?.total);
+        document.getElementById('stat-processes-month').textContent = number(data.processes?.month);
+        document.getElementById('stat-processes-total').textContent = number(data.processes?.total);
+        document.getElementById('stat-adobe-used').textContent = `${number(data.adobe?.month)} digunakan`;
+        document.getElementById('stat-adobe-limit').textContent = data.adobe?.limit > 0 ? `dari ${number(data.adobe.limit)} limit/bulan` : 'Limit belum diatur di Vercel';
+        document.getElementById('stat-adobe-remaining').textContent = data.adobe?.remaining === null ? '—' : number(data.adobe.remaining);
+        document.getElementById('stat-adobe-bar').style.width = `${data.adobe?.percentage || 0}%`;
+
+        const labels = {
+          'ocr-ba': 'Smart Scan & OCR', 'pdf-to-word': 'PDF ke Word', 'pdf-to-excel': 'PDF ke Excel',
+          'pdf-to-ppt': 'PDF ke PowerPoint', 'word-to-pdf': 'Word ke PDF', 'excel-to-pdf': 'Excel ke PDF',
+          'ppt-to-pdf': 'PowerPoint ke PDF', merge: 'Penggabung Semua File', 'edit-pdf': 'Edit PDF'
+        };
+        const entries = Object.entries(data.byTool || {}).sort((a, b) => b[1] - a[1]);
+        const max = Math.max(1, ...entries.map(([, value]) => Number(value || 0)));
+        document.getElementById('stat-tools-list').innerHTML = entries.map(([tool, value]) => `
+          <div class="flex items-center gap-3">
+            <span class="w-36 text-[10px] font-semibold text-slate-600 truncate">${labels[tool] || tool}</span>
+            <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-indigo-500 rounded-full" style="width:${Math.round((value / max) * 100)}%"></div></div>
+            <span class="w-8 text-right text-xs font-bold text-slate-900">${number(value)}</span>
+          </div>`).join('');
+
+        const daily = data.visitorsLast7Days || [];
+        const dailyMax = Math.max(1, ...daily.map(item => Number(item.value || 0)));
+        document.getElementById('stat-daily-visitors').innerHTML = daily.map(item => {
+          const height = Math.max(4, Math.round((Number(item.value || 0) / dailyMax) * 135));
+          const day = new Date(`${item.date}T00:00:00Z`).toLocaleDateString('id-ID', { weekday: 'short', timeZone: 'UTC' });
+          return `<div class="h-full flex flex-col justify-end items-center gap-2"><span class="text-[10px] font-bold text-slate-600">${number(item.value)}</span><div class="w-full max-w-10 bg-emerald-500 rounded-t-lg" style="height:${height}px"></div><span class="text-[9px] font-bold text-slate-400">${day}</span></div>`;
+        }).join('');
+      }
+
+      adminLogout() {
+        this.adminPassword = '';
+        const input = document.getElementById('admin-password');
+        if (input) input.value = '';
+        history.replaceState({}, '', window.location.pathname);
+        this.showHome();
+      }
+
+      async trackVisitOnce() {
+        try {
+          const day = new Date().toISOString().slice(0, 10);
+          if (localStorage.getItem('hazeverter-visitor-day') === day) return;
+          const response = await fetch('/api/convert?event=visit', { method: 'POST', keepalive: true });
+          if (response.ok) localStorage.setItem('hazeverter-visitor-day', day);
+        } catch (_) {}
+      }
+
+      async trackToolRun(tool) {
+        try {
+          await fetch(`/api/convert?event=tool_run&tool=${encodeURIComponent(tool)}`, { method: 'POST', keepalive: true });
+        } catch (_) {}
       }
 
       selectTool(toolKey) {
@@ -673,6 +867,13 @@
           document.getElementById('page-order-hint').classList.add('flex');
           document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Tambahkan PDF/gambar, lalu klik-tahan dan geser setiap halaman ke posisi yang diinginkan.';
           this.switchPreviewTab('preview');
+        } else if (toolKey === 'merge') {
+          document.getElementById('ocr-preview-tabs').classList.add('hidden');
+          document.getElementById('ocr-preview-tabs').classList.remove('flex');
+          document.getElementById('page-order-hint').classList.remove('hidden');
+          document.getElementById('page-order-hint').classList.add('flex');
+          document.getElementById('page-order-hint').innerHTML = '<i class="fa-solid fa-grip-vertical"></i> Semua format akan menjadi PDF. Klik-tahan lalu geser kartu untuk menentukan urutan halaman/file.';
+          this.switchPreviewTab('preview');
         } else {
           document.getElementById('ocr-preview-tabs').classList.add('hidden');
           document.getElementById('ocr-preview-tabs').classList.remove('flex');
@@ -682,6 +883,7 @@
         }
 
         document.getElementById('view-home').classList.add('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
         document.getElementById('view-workspace').classList.remove('hidden');
         document.getElementById('view-processing').classList.add('hidden');
         document.getElementById('view-download').classList.add('hidden');
@@ -1040,6 +1242,18 @@
                 <input id="opt-edit-filename" value="dokumen_hasil_edit.pdf" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono bg-slate-50 font-bold outline-none focus:border-violet-600">
               </div>
             </div>`;
+        } else if (tool === 'merge') {
+          optionsContainer.innerHTML = `
+            <div class="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 space-y-2 text-xs">
+              <div class="flex items-center gap-2 text-indigo-950 font-bold">
+                <i class="fa-solid fa-layer-group p-1.5 bg-indigo-600 text-white rounded-lg"></i>
+                <span>Penggabungan multi-format</span>
+              </div>
+              <p class="text-slate-600 leading-relaxed">PDF langsung digabungkan. Word, Excel, dan PowerPoint dikonversi melalui Adobe terlebih dahulu. Gambar dibuat menjadi halaman PDF. Geser kartu untuk menentukan urutan akhir.</p>
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                ${['PDF','DOCX','XLSX','PPTX','JPG','PNG','WEBP','HEIC'].map(x => `<span class="bg-white border border-indigo-200 text-indigo-700 px-2 py-1 rounded-lg text-[9px] font-bold">${x}</span>`).join('')}
+              </div>
+            </div>`;
         } else if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(tool)) {
           optionsContainer.innerHTML = `
             <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 space-y-3 text-xs">
@@ -1136,6 +1350,7 @@
             file: f,
             url: previewUrl,
             originalUrl: URL.createObjectURL(f),
+            isPdf,
             finalName: f.name.replace(/\.[^/.]+$/, "") + ".pdf",
             sizeMb: (f.size / (1024 * 1024)).toFixed(2),
             ocrText: null,
@@ -1259,6 +1474,10 @@
       renderFileList() {
         const grid = document.getElementById('file-list-grid');
         grid.innerHTML = '';
+        const isSingleConverter = ['pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'word-to-pdf', 'excel-to-pdf', 'ppt-to-pdf'].includes(this.currentTool);
+        grid.className = isSingleConverter
+          ? 'grid grid-cols-1 gap-4 max-h-[620px] overflow-y-auto custom-scrollbar p-2 w-full'
+          : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-6 max-h-[520px] overflow-y-auto custom-scrollbar p-2 w-full';
 
         for (let idx = 0; idx < this.files.length; idx++) {
           const item = this.files[idx];
@@ -1268,7 +1487,7 @@
           card.className = `relative rounded-2xl border p-3 flex flex-col items-center justify-between cursor-pointer transition-all bg-white shadow-sm ${
             isSelected ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/40' : 'border-slate-200 hover:border-emerald-500'
           }`;
-          card.draggable = ['ocr-ba', 'edit-pdf'].includes(this.currentTool) && this.files.length > 1;
+          card.draggable = ['ocr-ba', 'edit-pdf', 'merge'].includes(this.currentTool) && this.files.length > 1;
           card.dataset.pageIndex = idx;
 
           if (card.draggable) {
@@ -1288,6 +1507,16 @@
               <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
                 <span class="absolute top-2 left-2 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.kind === 'pdf-page' ? `PDF ${item.pageIndex + 1}` : 'GAMBAR'}</span>
                 <img src="${item.url}" onload="app.capturePreviewOrientation(this, ${idx})" class="w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'}">
+              </div>`;
+          } else if (item.isPdf && this.currentTool !== 'merge') {
+            previewHtml = `
+              <div class="relative w-full rounded-xl overflow-hidden bg-slate-200 mb-3 border border-slate-300">
+                <div class="h-11 bg-slate-900 text-white px-4 flex items-center justify-between gap-3">
+                  <span class="text-[11px] font-bold flex items-center gap-2"><i class="fa-solid fa-file-pdf text-red-400"></i> PREVIEW ISI PDF ${item.previewPageCount ? `• ${item.previewPageCount} HALAMAN` : ''}</span>
+                  <button type="button" onclick="event.stopPropagation(); app.openPdfPreview(${idx})" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors"><i class="fa-solid fa-up-right-from-square mr-1"></i> Layar Penuh</button>
+                </div>
+                <iframe title="Preview ${this.escapePreviewText(item.file.name)}" src="${item.originalUrl}#page=1&view=FitH&toolbar=0&navpanes=0" class="w-full h-[500px] bg-white border-0"></iframe>
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900/80 text-white text-[9px] font-semibold px-3 py-1.5 rounded-full pointer-events-none">Scroll untuk melihat halaman berikutnya</div>
               </div>`;
           } else if (item.file.type.startsWith('image/')) {
             previewHtml = `
@@ -1328,7 +1557,7 @@
             
             <div class="flex items-center justify-between w-full mt-1 pt-2 border-t border-slate-100 px-1">
               <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                ${['ocr-ba', 'edit-pdf'].includes(this.currentTool) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
+                ${['ocr-ba', 'edit-pdf', 'merge'].includes(this.currentTool) && this.files.length > 1 ? '<i class="fa-solid fa-grip-vertical text-emerald-500"></i>' : ''}
                 Halaman ${idx + 1}
               </span>
               <div class="flex items-center gap-1">
@@ -1348,6 +1577,12 @@
         if (!item || !img) return;
         item.previewOrientation = img.naturalWidth > img.naturalHeight ? 'landscape' : 'portrait';
         this.updatePreviewLayout();
+      }
+
+      openPdfPreview(index) {
+        const item = this.files[index];
+        if (!item?.originalUrl) return;
+        window.open(`${item.originalUrl}#page=1&view=FitH`, '_blank', 'noopener,noreferrer');
       }
 
       startPageDrag(event, index) {
@@ -1419,6 +1654,11 @@
       }
 
       clearFiles() {
+        this.files.forEach(item => {
+          [item.url, item.originalUrl].forEach(url => {
+            if (typeof url === 'string' && url.startsWith('blob:')) URL.revokeObjectURL(url);
+          });
+        });
         this.files = [];
         this.selectedIndex = 0;
         this.detectedBaNumber = '';
@@ -1446,6 +1686,7 @@
             this.setDownloadResult(this.files[0].file, "dokumen_hasil.pdf");
             this.showDownloadScreen();
           }
+          await this.trackToolRun(this.currentTool);
         } catch (error) {
           console.error("Client Process Error:", error);
           alert('GAGAL PROSES: ' + error.message);
@@ -1660,16 +1901,101 @@
       async processMergePDF() {
         const mergedPdf = await PDFLib.PDFDocument.create();
         for (let i = 0; i < this.files.length; i++) {
-          const arrayBuffer = await this.files[i].file.arrayBuffer();
-          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-          copiedPages.forEach((page) => mergedPdf.addPage(page));
+          const item = this.files[i];
+          const file = item.file;
+          const lowerName = file.name.toLowerCase();
+          const progress = 10 + Math.round(((i + 1) / this.files.length) * 75);
+          document.getElementById('processing-progress-bar').style.width = `${progress}%`;
+          document.getElementById('processing-status').textContent = `Memproses ${i + 1}/${this.files.length}: ${file.name}`;
+
+          if (item.isPdf || lowerName.endsWith('.pdf')) {
+            await this.appendPdfToDocument(mergedPdf, await file.arrayBuffer());
+          } else if (/\.(docx|xlsx|pptx)$/i.test(lowerName)) {
+            const convertedPdf = await this.convertOfficeFileForMerge(file);
+            await this.appendPdfToDocument(mergedPdf, await convertedPdf.arrayBuffer());
+          } else if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(lowerName)) {
+            await this.appendImageToDocument(mergedPdf, file);
+          } else {
+            throw new Error(`Format ${file.name} belum didukung untuk penggabungan.`);
+          }
         }
         const pdfBytes = await mergedPdf.save();
         let blob = new Blob([pdfBytes], { type: 'application/pdf' });
         blob = await this.normalizePdfBlob(blob);
         this.setDownloadResult(blob, 'gabungan_dokumen.pdf');
         this.showDownloadScreen();
+      }
+
+      async appendPdfToDocument(targetPdf, sourceBytes) {
+        const pdfDoc = await PDFLib.PDFDocument.load(sourceBytes);
+        const copiedPages = await targetPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        copiedPages.forEach(page => targetPdf.addPage(page));
+      }
+
+      async appendImageToDocument(targetPdf, file) {
+        let bytes = await file.arrayBuffer();
+        let embedded;
+        const lowerName = file.name.toLowerCase();
+        if (file.type === 'image/png' || lowerName.endsWith('.png')) {
+          embedded = await targetPdf.embedPng(bytes);
+        } else if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(lowerName)) {
+          embedded = await targetPdf.embedJpg(bytes);
+        } else {
+          const imageUrl = URL.createObjectURL(file);
+          try {
+            const jpegDataUrl = await new Promise((resolve, reject) => {
+              const image = new Image();
+              image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+                canvas.getContext('2d').drawImage(image, 0, 0);
+                resolve(canvas.toDataURL('image/jpeg', 0.92));
+              };
+              image.onerror = reject;
+              image.src = imageUrl;
+            });
+            bytes = await fetch(jpegDataUrl).then(response => response.arrayBuffer());
+            embedded = await targetPdf.embedJpg(bytes);
+          } finally {
+            URL.revokeObjectURL(imageUrl);
+          }
+        }
+        const dims = embedded.scale(1);
+        const [pageWidth, pageHeight] = this.resolvePageDimensions(dims.width, dims.height);
+        const page = targetPdf.addPage([pageWidth, pageHeight]);
+        page.drawImage(embedded, this.calculatePlacement(dims.width, dims.height, pageWidth, pageHeight));
+      }
+
+      async convertOfficeFileForMerge(file) {
+        const lowerName = file.name.toLowerCase();
+        const conversionType = lowerName.endsWith('.docx') ? 'word-to-pdf'
+          : lowerName.endsWith('.xlsx') ? 'excel-to-pdf'
+          : lowerName.endsWith('.pptx') ? 'ppt-to-pdf'
+          : null;
+        if (!conversionType) throw new Error(`Format Office ${file.name} tidak didukung.`);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('format', 'pdf');
+        formData.append('conversionType', conversionType);
+        const response = await fetch(`/api/convert?format=pdf&type=${encodeURIComponent(conversionType)}`, {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          let message = `Gagal mengubah ${file.name} menjadi PDF.`;
+          try {
+            const data = await response.json();
+            if (data?.error) message = `${file.name}: ${data.error}`;
+          } catch (_) {}
+          throw new Error(message);
+        }
+        const blob = await response.blob();
+        const signature = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+        const validPdf = signature[0] === 0x25 && signature[1] === 0x50 && signature[2] === 0x44 && signature[3] === 0x46 && signature[4] === 0x2D;
+        if (!validPdf) throw new Error(`${file.name} tidak menghasilkan PDF yang valid.`);
+        return blob;
       }
 
       async processEditedPDF() {
@@ -1726,10 +2052,38 @@
       showDownloadScreen() {
         document.getElementById('view-processing').classList.add('hidden');
         document.getElementById('view-download').classList.remove('hidden');
+        const continueButton = document.getElementById('continue-tool-btn');
+        if (continueButton) {
+          continueButton.textContent = this.currentTool === 'merge'
+            ? 'Gabungkan File Lain'
+            : 'Proses File Lain di Fitur Ini';
+        }
         if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
 
+      handleDownloadClick() {
+        if (this.downloadReturnTimer) clearTimeout(this.downloadReturnTimer);
+        this.downloadReturnTimer = setTimeout(() => {
+          this.downloadReturnTimer = null;
+          this.continueCurrentTool();
+        }, 700);
+      }
+
+      continueCurrentTool() {
+        if (this.downloadReturnTimer) {
+          clearTimeout(this.downloadReturnTimer);
+          this.downloadReturnTimer = null;
+        }
+        const tool = this.currentTool;
+        this.clearFiles();
+        document.getElementById('view-download').classList.add('hidden');
+        document.getElementById('view-processing').classList.add('hidden');
+        this.selectTool(tool);
+      }
+
       resetState() {
+        if (this.downloadReturnTimer) clearTimeout(this.downloadReturnTimer);
+        this.downloadReturnTimer = null;
         this.clearFiles();
         this.showHome();
       }
@@ -1738,7 +2092,13 @@
     let app;
     window.addEventListener('DOMContentLoaded', () => {
       app = new PDFApp();
-      app.showHome();
+      const isAdmin = new URLSearchParams(window.location.search).get('admin') === '1';
+      if (isAdmin) {
+        app.showAdminLogin();
+      } else {
+        app.showHome();
+        app.trackVisitOnce();
+      }
     });
   </script>
 </body>
