@@ -1019,7 +1019,9 @@
           }
           processedFiles.push(fileToProcess);
         }
-        if (this.officePdfReady || ['edit-pdf', 'organize-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'split-pdf'].includes(this.currentTool)) {
+        if (this.currentTool === 'merge') {
+          await this.addMergeFiles(processedFiles);
+        } else if (this.officePdfReady || ['edit-pdf', 'organize-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-ppt', 'pdf-to-jpg', 'split-pdf'].includes(this.currentTool)) {
           await this.addEditorFiles(processedFiles);
         } else {
           await this.addFiles(processedFiles);
@@ -1040,7 +1042,7 @@
               canvas.width = viewport.width; canvas.height = viewport.height;
               await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
               this.files.push({
-                kind: 'pdf-page', file, pdfBytes: bytes.slice(0), pageIndex, rotation: 0,
+                kind: 'pdf-page', file, pdfBytes: bytes, pageIndex, rotation: 0,
                 url: canvas.toDataURL('image/jpeg', 0.82),
                 sizeMb: (file.size / 1048576).toFixed(2),
                 sourceName: file.name,
@@ -1062,6 +1064,24 @@
         document.getElementById('add-more-label').textContent = 'Tambah PDF / Gambar';
         document.getElementById('file-count-badge').textContent = `${this.files.length} Halaman`;
         this.selectedIndex = startIndex;
+        this.renderFileList();
+        this.renderToolOptions(this.currentTool);
+      }
+
+      async addMergeFiles(newFiles) {
+        if (!newFiles || newFiles.length === 0) return;
+        for (const file of newFiles) {
+          const lowerName = file.name.toLowerCase();
+          const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+          const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(lowerName);
+          if (isPdf || isImage) {
+            await this.addEditorFiles([file]);
+          } else {
+            await this.addFiles([file]);
+          }
+        }
+        document.getElementById('add-more-label').textContent = 'Tambah File Lain';
+        document.getElementById('file-count-badge').textContent = `${this.files.length} Halaman / File`;
         this.renderFileList();
         this.renderToolOptions(this.currentTool);
       }
@@ -1698,7 +1718,7 @@
                 Halaman ${idx + 1}
               </span>
               <div class="flex items-center gap-1">
-                ${(item.kind === 'pdf-page' || ['ocr-ba', 'jpg-to-pdf', 'edit-pdf', 'organize-pdf'].includes(this.currentTool)) ? `<button onclick="event.stopPropagation(); app.rotatePage(${idx}, -90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-left"></i></button><button onclick="event.stopPropagation(); app.rotatePage(${idx}, 90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
+                ${(item.kind === 'pdf-page' || ['ocr-ba', 'jpg-to-pdf', 'edit-pdf', 'organize-pdf', 'merge'].includes(this.currentTool)) ? `<button onclick="event.stopPropagation(); app.rotatePage(${idx}, -90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-left"></i></button><button onclick="event.stopPropagation(); app.rotatePage(${idx}, 90)" type="button" class="p-1 px-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
                 <button onclick="event.stopPropagation(); app.removeFile(${idx})" type="button" class="p-1 px-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-500 text-xs font-bold transition-colors">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1889,6 +1909,13 @@
           page.drawPage(embedded, placement);
         }
         return new Blob([await output.save()], { type: 'application/pdf' });
+      }
+
+      async rotatePdfBlob(blob, rotation = 0) {
+        if (!rotation) return blob;
+        const pdf = await PDFLib.PDFDocument.load(await blob.arrayBuffer());
+        pdf.getPages().forEach(page => page.setRotation(PDFLib.degrees((page.getRotation().angle + rotation) % 360)));
+        return new Blob([await pdf.save()], { type: 'application/pdf' });
       }
 
       async buildAdjustedPDFBlob(items = this.files) {
@@ -2113,11 +2140,17 @@
           document.getElementById('processing-progress-bar').style.width = `${progress}%`;
           document.getElementById('processing-status').textContent = `Memproses ${i + 1}/${this.files.length}: ${file.name}`;
 
-          if (item.isPdf || lowerName.endsWith('.pdf')) {
-            await this.appendPdfToDocument(mergedPdf, await file.arrayBuffer());
+          if (item.kind === 'pdf-page') {
+            const adjustedPage = await this.buildAdjustedPDFBlob([item]);
+            await this.appendPdfToDocument(mergedPdf, await adjustedPage.arrayBuffer());
+          } else if (item.isPdf || lowerName.endsWith('.pdf')) {
+            const adjustedPdf = await this.normalizePdfBlob(file);
+            await this.appendPdfToDocument(mergedPdf, await adjustedPdf.arrayBuffer());
           } else if (/\.(docx|xlsx|pptx)$/i.test(lowerName)) {
             const convertedPdf = await this.convertOfficeFileForMerge(file);
-            await this.appendPdfToDocument(mergedPdf, await convertedPdf.arrayBuffer());
+            let adjustedPdf = await this.normalizePdfBlob(convertedPdf);
+            adjustedPdf = await this.rotatePdfBlob(adjustedPdf, item.rotation || 0);
+            await this.appendPdfToDocument(mergedPdf, await adjustedPdf.arrayBuffer());
           } else if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(lowerName)) {
             await this.appendImageToDocument(mergedPdf, file, item.rotation || 0);
           } else {
@@ -2125,8 +2158,7 @@
           }
         }
         const pdfBytes = await mergedPdf.save();
-        let blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        blob = await this.normalizePdfBlob(blob);
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         this.setDownloadResult(blob, 'gabungan_dokumen.pdf');
         this.showDownloadScreen();
       }
