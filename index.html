@@ -18,6 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -77,6 +78,11 @@
     .page-preview-sheet { transition: width .2s ease, aspect-ratio .2s ease; }
     .page-preview-sheet[data-orientation="portrait"] { aspect-ratio: 210 / 297; }
     .page-preview-sheet[data-orientation="landscape"] { aspect-ratio: 297 / 210; }
+    .office-preview-pages .docx-wrapper { background: transparent !important; padding: 0 !important; }
+    .office-preview-pages .docx-wrapper > section.docx { margin: 0 auto 20px !important; box-shadow: 0 12px 30px rgba(15,23,42,.22); }
+    .office-sheet-table { border-collapse: collapse; min-width: 100%; background: white; font-size: 12px; }
+    .office-sheet-table td, .office-sheet-table th { border: 1px solid #cbd5e1; padding: 6px 8px; white-space: nowrap; color: #0f172a; }
+    .office-sheet-table tr:first-child td { background: #d1fae5; font-weight: 700; }
     @media (max-width: 639px) {
       #view-home { padding-top: 1.75rem; padding-left: .75rem; padding-right: .75rem; }
       #view-home > div:first-child { margin-bottom: 1.75rem; }
@@ -564,6 +570,7 @@
         </div>
         <div id="page-preview-scroll" class="flex flex-1 items-start justify-center overflow-auto bg-slate-800 p-4 sm:p-8">
           <img id="page-preview-full-image" alt="Preview isi halaman PDF" class="block max-w-none rounded-sm bg-white shadow-2xl" style="width:min(100%, 900px); transform-origin:top center;">
+          <div id="office-preview-content" class="office-preview-pages hidden w-full max-w-6xl"></div>
         </div>
       </div>
     </div>
@@ -1239,6 +1246,10 @@
         this.fullPreviewIndex = index;
         const modal = document.getElementById('page-preview-modal');
         const image = document.getElementById('page-preview-full-image');
+        const officeContent = document.getElementById('office-preview-content');
+        image.classList.remove('hidden');
+        officeContent.classList.add('hidden');
+        officeContent.innerHTML = '';
         const pageNumber = Number.isInteger(item.pageIndex) ? item.pageIndex + 1 : index + 1;
         document.getElementById('page-preview-title').textContent = `${item.sourceName || item.file?.name || 'Dokumen'} — Halaman ${pageNumber}`;
         document.getElementById('page-preview-details').textContent = `${item.originalPageSizeLabel || 'Ukuran asli'} • preview resolusi tinggi`;
@@ -1247,6 +1258,90 @@
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
         this.updatePagePreviewZoom();
+      }
+
+      async openOfficePreview(index) {
+        const item = this.files[index];
+        if (!item?.file) return;
+        const modal = document.getElementById('page-preview-modal');
+        const image = document.getElementById('page-preview-full-image');
+        const content = document.getElementById('office-preview-content');
+        const name = item.file.name.toLowerCase();
+        image.classList.add('hidden');
+        content.classList.remove('hidden');
+        content.innerHTML = '<div class="py-20 text-center text-white"><i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-400"></i><p class="mt-3 text-sm font-bold">Membuka seluruh isi dokumen di browser…</p></div>';
+        document.getElementById('page-preview-title').textContent = item.file.name;
+        document.getElementById('page-preview-details').textContent = 'Preview lokal • tidak menggunakan kuota Adobe';
+        document.getElementById('page-preview-zoom-label').textContent = '100%';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+
+        try {
+          const buffer = await item.file.arrayBuffer();
+          content.innerHTML = '';
+          if (name.endsWith('.docx')) {
+            if (!window.docx?.renderAsync) throw new Error('Renderer DOCX gagal dimuat. Muat ulang halaman dan coba lagi.');
+            await window.docx.renderAsync(buffer, content, null, {
+              className: 'docx', inWrapper: true, ignoreWidth: false, ignoreHeight: false,
+              ignoreFonts: false, breakPages: true, renderHeaders: true, renderFooters: true,
+              renderFootnotes: true, useBase64URL: true
+            });
+            return;
+          }
+
+          if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+            if (!window.XLSX) throw new Error('Renderer Excel gagal dimuat.');
+            const workbook = window.XLSX.read(buffer, { type: 'array', cellStyles: true });
+            for (const sheetName of workbook.SheetNames) {
+              const section = document.createElement('section');
+              section.className = 'mb-8 overflow-hidden rounded-xl bg-white shadow-2xl';
+              const heading = document.createElement('div');
+              heading.className = 'sticky left-0 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-800';
+              heading.textContent = `Sheet: ${sheetName}`;
+              const tableWrap = document.createElement('div');
+              tableWrap.className = 'max-h-[70vh] overflow-auto';
+              tableWrap.innerHTML = window.XLSX.utils.sheet_to_html(workbook.Sheets[sheetName], { editable: false });
+              const table = tableWrap.querySelector('table');
+              if (table) table.className = 'office-sheet-table';
+              section.append(heading, tableWrap);
+              content.appendChild(section);
+            }
+            return;
+          }
+
+          if (name.endsWith('.pptx')) {
+            if (!window.JSZip) throw new Error('Renderer PowerPoint gagal dimuat.');
+            const zip = await window.JSZip.loadAsync(buffer);
+            const slideNames = Object.keys(zip.files)
+              .filter(path => /^ppt\/slides\/slide\d+\.xml$/.test(path))
+              .sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
+            if (!slideNames.length) throw new Error('Slide PowerPoint tidak ditemukan.');
+            for (let i = 0; i < slideNames.length; i++) {
+              const xml = await zip.file(slideNames[i]).async('text');
+              const xmlDoc = new DOMParser().parseFromString(xml, 'application/xml');
+              const texts = Array.from(xmlDoc.getElementsByTagNameNS('*', 't')).map(node => node.textContent).filter(Boolean);
+              const slide = document.createElement('section');
+              slide.className = 'relative mx-auto mb-8 aspect-video w-full max-w-5xl overflow-hidden rounded-xl bg-white p-[6%] text-slate-900 shadow-2xl';
+              const number = document.createElement('span');
+              number.className = 'absolute right-4 top-3 rounded-full bg-orange-100 px-3 py-1 text-xs font-extrabold text-orange-700';
+              number.textContent = `Slide ${i + 1}`;
+              slide.appendChild(number);
+              texts.forEach((text, textIndex) => {
+                const line = document.createElement(textIndex === 0 ? 'h2' : 'p');
+                line.className = textIndex === 0 ? 'mb-6 pr-20 text-2xl font-extrabold sm:text-4xl' : 'mb-3 text-sm leading-relaxed sm:text-xl';
+                line.textContent = text;
+                slide.appendChild(line);
+              });
+              if (!texts.length) slide.insertAdjacentHTML('beforeend', '<p class="text-slate-400">Slide tidak memiliki teks yang dapat ditampilkan.</p>');
+              content.appendChild(slide);
+            }
+            return;
+          }
+          throw new Error('Format ini belum mendukung preview lokal.');
+        } catch (error) {
+          content.innerHTML = `<div class="mx-auto max-w-lg rounded-xl bg-white p-8 text-center shadow-xl"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-500"></i><p class="mt-3 text-sm font-bold text-slate-900">Preview tidak dapat dibuka</p><p class="mt-2 text-xs text-slate-500">${this.escapePreviewText(error.message)}</p></div>`;
+        }
       }
 
       closePagePreview() {
@@ -1271,7 +1366,12 @@
       updatePagePreviewZoom() {
         const zoom = Number(this.fullPreviewZoom || 1);
         const image = document.getElementById('page-preview-full-image');
-        if (image) image.style.width = `${Math.round(Math.min(window.innerWidth - 48, 900) * zoom)}px`;
+        if (image && !image.classList.contains('hidden')) image.style.width = `${Math.round(Math.min(window.innerWidth - 48, 900) * zoom)}px`;
+        const officeContent = document.getElementById('office-preview-content');
+        if (officeContent && !officeContent.classList.contains('hidden')) {
+          officeContent.style.transform = `scale(${zoom})`;
+          officeContent.style.transformOrigin = 'top center';
+        }
         const label = document.getElementById('page-preview-zoom-label');
         if (label) label.textContent = `${Math.round(zoom * 100)}%`;
       }
@@ -1790,6 +1890,7 @@
             previewHtml = `
               <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
                 <span class="absolute top-2 left-2 bg-slate-900/90 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.contentPreviewLabel || 'PREVIEW ISI'}</span>
+                <button onclick="event.stopPropagation(); app.openOfficePreview(${idx})" type="button" class="absolute top-2 right-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg shadow z-10"><i class="fa-solid fa-expand mr-1"></i> Buka Isi</button>
                 <img src="${item.url}" class="w-full h-full object-contain">
               </div>`;
           } else {
