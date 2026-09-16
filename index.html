@@ -110,7 +110,7 @@
         </div>
 
         <nav class="hidden lg:flex space-x-4 text-xs font-bold text-slate-700 tracking-wide">
-          <button onclick="app.selectTool('ocr-ba')" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> SMART SCAN & CROP A4</button>
+          <button onclick="app.selectTool('ocr-ba')" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> SMART SCAN & CROP</button>
           <button onclick="app.selectTool('pdf-to-word')" class="hover:text-brand-600 transition-colors py-2">PDF KE WORD</button>
           <button onclick="app.selectTool('pdf-to-excel')" class="hover:text-brand-600 transition-colors py-2">PDF KE EXCEL</button>
           <button onclick="app.selectTool('merge')" class="hover:text-brand-600 transition-colors py-2">GABUNG PDF</button>
@@ -149,11 +149,11 @@
               <i class="fa-solid fa-crop-simple text-2xl text-emerald-400"></i>
             </div>
             <div class="flex items-center gap-2 mb-2 flex-wrap">
-              <h3 class="text-2xl font-bold text-white">Smart Scan & Crop A4</h3>
+              <h3 class="text-2xl font-bold text-white">Smart Scan & Free Crop</h3>
               <span class="text-[10px] bg-brand-500 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">UNGGULAN</span>
             </div>
             <p class="text-sm text-emerald-100/90 leading-relaxed max-w-lg">
-              Konversi foto fisik / HEIC iPhone menjadi PDF A4 presisi dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
+              Konversi foto fisik / HEIC iPhone menjadi PDF sesuai ukuran dokumen, dengan pemotongan bebas, filter scan hitam putih/warna, dan deteksi otomatis nomor BA.
             </p>
           </div>
           <div class="mt-8 text-emerald-300 font-semibold text-sm flex items-center gap-2 group-hover:translate-x-2 transition-transform">
@@ -406,8 +406,8 @@
             <i class="fa-solid fa-arrow-left text-lg"></i>
           </button>
           <div>
-            <h2 id="active-tool-title" class="text-xl font-bold text-slate-900">Smart Scan & Free Crop A4</h2>
-            <p id="active-tool-subtitle" class="text-xs text-slate-500">Sesuaikan pemotongan gambar, format A4, dan ekstraksi nomor BA</p>
+            <h2 id="active-tool-title" class="text-xl font-bold text-slate-900">Smart Scan & Free Crop</h2>
+            <p id="active-tool-subtitle" class="text-xs text-slate-500">Sesuaikan pemotongan gambar, ukuran dokumen, dan ekstraksi nomor BA</p>
           </div>
         </div>
 
@@ -517,9 +517,9 @@
         <div class="flex justify-between items-center mb-4 pb-2 border-b">
           <div>
             <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
-              <i class="fa-solid fa-crop-simple text-brand-600"></i> Potong Area Bebas & Pas A4
+              <i class="fa-solid fa-crop-simple text-brand-600"></i> Potong Area Dokumen
             </h3>
-            <p class="text-xs text-slate-500">Atur batas potong secara manual, sistem akan mempresisikan ke kertas A4</p>
+            <p class="text-xs text-slate-500">Atur batas potong secara manual. Ukuran asli tetap dipertahankan kecuali Anda memilih ukuran lain.</p>
           </div>
           <button onclick="app.closeCropModal()" class="text-slate-400 hover:text-slate-700 p-2">
             <i class="fa-solid fa-xmark text-xl"></i>
@@ -540,9 +540,30 @@
               Batal
             </button>
             <button onclick="app.applyCrop()" type="button" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-600/20">
-              Simpan & Presisikan ke A4
+              Simpan Hasil Potong
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULL PAGE PREVIEW MODAL -->
+    <div id="page-preview-modal" class="fixed inset-0 z-[60] hidden bg-slate-950/95 p-3 sm:p-6 flex-col">
+      <div class="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+        <div class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-white">
+          <div class="min-w-0">
+            <h3 id="page-preview-title" class="truncate text-sm font-bold">Preview halaman</h3>
+            <p id="page-preview-details" class="text-[11px] text-slate-300"></p>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <button onclick="app.changePagePreviewZoom(-0.25)" type="button" class="h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20" title="Perkecil"><i class="fa-solid fa-minus"></i></button>
+            <button onclick="app.resetPagePreviewZoom()" type="button" class="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"><span id="page-preview-zoom-label">100%</span></button>
+            <button onclick="app.changePagePreviewZoom(0.25)" type="button" class="h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20" title="Perbesar"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="app.closePagePreview()" type="button" class="ml-1 h-9 w-9 rounded-lg bg-red-500/90 hover:bg-red-500" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div id="page-preview-scroll" class="flex flex-1 items-start justify-center overflow-auto bg-slate-800 p-4 sm:p-8">
+          <img id="page-preview-full-image" alt="Preview isi halaman PDF" class="block max-w-none rounded-sm bg-white shadow-2xl" style="width:min(100%, 900px); transform-origin:top center;">
         </div>
       </div>
     </div>
@@ -623,7 +644,7 @@
         this.officePdfReady = false;
         this.officeOutputFilename = '';
         this.pageSettings = {
-          pageSize: 'a4',
+          pageSize: 'original',
           orientation: 'auto',
           placement: 'fit',
           zoom: 100,
@@ -634,13 +655,13 @@
 
         this.toolConfig = {
           'ocr-ba': {
-            title: 'Smart Scan & Free Crop A4',
-            subtitle: 'Pemindaian foto, penyesuaian area bebas, dan pemotongan A4',
+            title: 'Smart Scan & Free Crop',
+            subtitle: 'Pemindaian foto, penyesuaian area bebas, dan ukuran halaman asli',
             accept: 'image/heic,image/heif,image/jpeg,image/png,image/webp,.heic',
             icon: 'fa-expand',
-            btnText: 'Buat Dokumen PDF A4 →',
+            btnText: 'Buat Dokumen PDF →',
             btnBg: 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20',
-            desc: 'Tarik & lepas foto dokumen di sini (HEIC & Potong A4)',
+            desc: 'Tarik & lepas foto dokumen di sini (HEIC & potong bebas)',
             btnLabel: 'Pilih Foto / Galeri'
           },
           'pdf-to-word': {
@@ -913,7 +934,7 @@
         }
         this.currentTool = toolKey;
         this.pageSettings = this.pageSettingsByTool[toolKey] || {
-          pageSize: ['ocr-ba', 'html-to-pdf'].includes(toolKey) ? 'a4' : 'original',
+          pageSize: 'original',
           orientation: 'auto',
           placement: 'fit', zoom: 100, offsetX: 0, offsetY: 0
         };
@@ -1037,16 +1058,23 @@
             const previewDoc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
             for (let pageIndex = 0; pageIndex < previewDoc.numPages; pageIndex++) {
               const page = await previewDoc.getPage(pageIndex + 1);
-              const viewport = page.getViewport({ scale: 0.45 });
+              const originalViewport = page.getViewport({ scale: 1 });
+              const renderScale = Math.min(2.5, Math.max(1.6, 1500 / Math.max(originalViewport.width, originalViewport.height)));
+              const viewport = page.getViewport({ scale: renderScale });
               const canvas = document.createElement('canvas');
-              canvas.width = viewport.width; canvas.height = viewport.height;
-              await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+              canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+              const context = canvas.getContext('2d', { alpha: false });
+              context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+              await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
               this.files.push({
                 kind: 'pdf-page', file, pdfBytes: bytes, pageIndex, rotation: 0,
-                url: canvas.toDataURL('image/jpeg', 0.82),
+                url: canvas.toDataURL('image/jpeg', 0.95),
                 sizeMb: (file.size / 1048576).toFixed(2),
                 sourceName: file.name,
-                previewOrientation: viewport.width > viewport.height ? 'landscape' : 'portrait'
+                previewOrientation: originalViewport.width > originalViewport.height ? 'landscape' : 'portrait',
+                originalPageWidth: originalViewport.width,
+                originalPageHeight: originalViewport.height,
+                originalPageSizeLabel: this.detectPageSizeLabel(originalViewport.width, originalViewport.height)
               });
             }
           } else if (file.type.startsWith('image/')) {
@@ -1066,6 +1094,21 @@
         this.selectedIndex = startIndex;
         this.renderFileList();
         this.renderToolOptions(this.currentTool);
+      }
+
+      detectPageSizeLabel(width, height) {
+        const shortSide = Math.min(width, height), longSide = Math.max(width, height);
+        const standards = [
+          ['A3', 841.89, 1190.55], ['A4', 595.28, 841.89], ['A5', 419.53, 595.28],
+          ['A6', 297.64, 419.53], ['Letter', 612, 792], ['Legal', 612, 1008]
+        ];
+        for (const [name, expectedShort, expectedLong] of standards) {
+          const shortDiff = Math.abs(shortSide - expectedShort) / expectedShort;
+          const longDiff = Math.abs(longSide - expectedLong) / expectedLong;
+          if (shortDiff <= 0.07 && longDiff <= 0.07) return name;
+        }
+        const widthMm = Math.round(width * 25.4 / 72), heightMm = Math.round(height * 25.4 / 72);
+        return `${widthMm} × ${heightMm} mm`;
       }
 
       async addMergeFiles(newFiles) {
@@ -1189,6 +1232,50 @@
         if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
       }
 
+      openPagePreview(index) {
+        const item = this.files[index];
+        if (!item?.url) return;
+        this.fullPreviewZoom = 1;
+        this.fullPreviewIndex = index;
+        const modal = document.getElementById('page-preview-modal');
+        const image = document.getElementById('page-preview-full-image');
+        const pageNumber = Number.isInteger(item.pageIndex) ? item.pageIndex + 1 : index + 1;
+        document.getElementById('page-preview-title').textContent = `${item.sourceName || item.file?.name || 'Dokumen'} — Halaman ${pageNumber}`;
+        document.getElementById('page-preview-details').textContent = `${item.originalPageSizeLabel || 'Ukuran asli'} • preview resolusi tinggi`;
+        image.src = item.url;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        this.updatePagePreviewZoom();
+      }
+
+      closePagePreview() {
+        const modal = document.getElementById('page-preview-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      changePagePreviewZoom(delta) {
+        this.fullPreviewZoom = Math.min(3, Math.max(0.5, Number(this.fullPreviewZoom || 1) + delta));
+        this.updatePagePreviewZoom();
+      }
+
+      resetPagePreviewZoom() {
+        this.fullPreviewZoom = 1;
+        this.updatePagePreviewZoom();
+        const scroll = document.getElementById('page-preview-scroll');
+        if (scroll) scroll.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+
+      updatePagePreviewZoom() {
+        const zoom = Number(this.fullPreviewZoom || 1);
+        const image = document.getElementById('page-preview-full-image');
+        if (image) image.style.width = `${Math.round(Math.min(window.innerWidth - 48, 900) * zoom)}px`;
+        const label = document.getElementById('page-preview-zoom-label');
+        if (label) label.textContent = `${Math.round(zoom * 100)}%`;
+      }
+
       triggerModalScanEffect() {
         const laser = document.getElementById('modal-laser');
         if (laser) {
@@ -1212,24 +1299,28 @@
       applyCrop() {
         if (!this.cropper || this.currentCroppingIndex === null) return;
         const croppedCanvas = this.cropper.getCroppedCanvas({ maxWidth: 2480, maxHeight: 3508, fillColor: '#fff' });
-        const a4Width = 2480, a4Height = 3508;
-        const a4Canvas = document.createElement('canvas');
-        a4Canvas.width = a4Width; a4Canvas.height = a4Height;
-        const ctx = a4Canvas.getContext('2d');
-        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, a4Width, a4Height);
+        const preserveOriginal = this.pageSettings.pageSize === 'original';
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = preserveOriginal ? croppedCanvas.width : 2480;
+        outputCanvas.height = preserveOriginal ? croppedCanvas.height : 3508;
+        const ctx = outputCanvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-        const scale = Math.min(a4Width / croppedCanvas.width, a4Height / croppedCanvas.height);
+        const scale = Math.min(outputCanvas.width / croppedCanvas.width, outputCanvas.height / croppedCanvas.height);
         const targetW = croppedCanvas.width * scale, targetH = croppedCanvas.height * scale;
-        const targetX = (a4Width - targetW) / 2, targetY = (a4Height - targetH) / 2;
+        const targetX = (outputCanvas.width - targetW) / 2, targetY = (outputCanvas.height - targetH) / 2;
 
         ctx.drawImage(croppedCanvas, targetX, targetY, targetW, targetH);
-        if (this.scanMode === 'grayscale') this.applyScanFilter(ctx, a4Width, a4Height);
+        if (this.scanMode === 'grayscale') this.applyScanFilter(ctx, outputCanvas.width, outputCanvas.height);
 
-        a4Canvas.toBlob(async (blob) => {
-          const a4File = new File([blob], `A4_Page_${this.currentCroppingIndex + 1}.jpg`, { type: 'image/jpeg' });
-          const newUrl = URL.createObjectURL(a4File);
-          this.files[this.currentCroppingIndex].file = a4File;
+        outputCanvas.toBlob(async (blob) => {
+          const outputFile = new File([blob], `Scan_Page_${this.currentCroppingIndex + 1}.jpg`, { type: 'image/jpeg' });
+          const newUrl = URL.createObjectURL(outputFile);
+          this.files[this.currentCroppingIndex].file = outputFile;
           this.files[this.currentCroppingIndex].url = newUrl;
+          this.files[this.currentCroppingIndex].originalPageWidth = outputCanvas.width;
+          this.files[this.currentCroppingIndex].originalPageHeight = outputCanvas.height;
+          this.files[this.currentCroppingIndex].originalPageSizeLabel = preserveOriginal ? 'Ukuran hasil potong' : 'A4';
           this.files[this.currentCroppingIndex].ocrText = null;
           this.renderFileList();
           this.renderToolOptions(this.currentTool);
@@ -1257,7 +1348,8 @@
       }
 
       getLayoutSummary() {
-        const size = this.pageSettings.pageSize === 'original' ? 'Ukuran asli' : this.pageSettings.pageSize.toUpperCase();
+        const originalLabel = this.files[this.selectedIndex]?.originalPageSizeLabel;
+        const size = this.pageSettings.pageSize === 'original' ? `Ukuran asli${originalLabel ? ` (${originalLabel})` : ''}` : this.pageSettings.pageSize.toUpperCase();
         const orientation = this.pageSettings.orientation === 'auto' ? 'orientasi otomatis' : (this.pageSettings.orientation === 'portrait' ? 'portrait' : 'landscape');
         const placement = this.pageSettings.placement === 'fit' ? 'Fit — halaman utuh' : 'Fill — memenuhi halaman';
         return `${size}, ${orientation}, ${placement}, zoom ${Number(this.pageSettings.zoom || 100)}%, posisi X ${Number(this.pageSettings.offsetX || 0)}, Y ${Number(this.pageSettings.offsetY || 0)}`;
@@ -1265,6 +1357,7 @@
 
       pageOptionsMarkup() {
         const s = this.pageSettings;
+        const originalLabel = this.files[this.selectedIndex]?.originalPageSizeLabel;
         return `
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-3 text-xs">
             <div class="flex items-center justify-between">
@@ -1275,7 +1368,9 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-500 mb-1">UKURAN HALAMAN</label>
                 <select onchange="app.setPageSetting('pageSize', this.value)" class="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 font-semibold outline-none focus:border-brand-600">
-                  <option value="original" ${s.pageSize === 'original' ? 'selected' : ''}>Ikuti ukuran asli</option>
+                  <option value="original" ${s.pageSize === 'original' ? 'selected' : ''}>Ikuti ukuran asli${originalLabel ? ` — ${originalLabel}` : ''}</option>
+                  <option value="a6" ${s.pageSize === 'a6' ? 'selected' : ''}>A6</option>
+                  <option value="a5" ${s.pageSize === 'a5' ? 'selected' : ''}>A5</option>
                   <option value="a4" ${s.pageSize === 'a4' ? 'selected' : ''}>A4</option>
                   <option value="letter" ${s.pageSize === 'letter' ? 'selected' : ''}>Letter</option>
                   <option value="legal" ${s.pageSize === 'legal' ? 'selected' : ''}>Legal</option>
@@ -1661,8 +1756,9 @@
           let previewHtml = '';
           if (item.kind === 'pdf-page' || this.currentTool === 'edit-pdf' || this.currentTool === 'organize-pdf') {
             previewHtml = `
-              <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" class="page-preview-sheet relative w-full max-h-56 rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-200 flex items-center justify-center p-1 mx-auto">
-                <span class="absolute top-2 left-2 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.kind === 'pdf-page' ? `PDF ${item.pageIndex + 1}` : 'GAMBAR'}</span>
+              <div data-item-index="${idx}" data-orientation="${this.getPreviewOrientation(item)}" style="${item.originalPageWidth && item.originalPageHeight ? `aspect-ratio:${item.originalPageWidth}/${item.originalPageHeight};` : ''}" class="page-preview-sheet relative w-full max-h-80 rounded-xl overflow-hidden bg-slate-200 mb-2 border border-slate-300 flex items-center justify-center p-2 mx-auto">
+                <span class="absolute top-2 left-2 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg z-10">${item.kind === 'pdf-page' ? `PDF ${item.pageIndex + 1} • ${item.originalPageSizeLabel || 'ASLI'}` : 'GAMBAR'}</span>
+                ${item.kind === 'pdf-page' ? `<button onclick="event.stopPropagation(); app.openPagePreview(${idx})" type="button" class="absolute top-2 right-2 bg-slate-950/85 hover:bg-slate-950 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg shadow z-10"><i class="fa-solid fa-expand mr-1"></i> Perbesar</button>` : ''}
                 <img src="${item.url}" onload="app.capturePreviewOrientation(this, ${idx})" style="transform:rotate(${item.rotation || 0}deg)" class="w-full h-full ${this.pageSettings.placement === 'fill' ? 'object-cover' : 'object-contain'}">
               </div>`;
           } else if (item.isPdf && this.currentTool !== 'merge') {
@@ -1867,6 +1963,8 @@
 
       resolvePageDimensions(contentWidth, contentHeight) {
         const sizes = {
+          a6: [297.64, 419.53],
+          a5: [419.53, 595.28],
           a4: [595.28, 841.89],
           letter: [612, 792],
           legal: [612, 1008]
@@ -2445,6 +2543,9 @@
         app.showHome();
         app.trackVisitOnce();
       }
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !document.getElementById('page-preview-modal').classList.contains('hidden')) app.closePagePreview();
+      });
     });
   </script>
 </body>
