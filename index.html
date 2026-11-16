@@ -2056,9 +2056,18 @@
           }
           if (!finishingOfficeAdjustment) await this.trackToolRun(this.currentTool);
         } catch (error) {
-          console.error("Client Process Error:", error);
-          alert('GAGAL PROSES: ' + error.message);
-          this.selectTool(this.currentTool);
+          console.error("Hazeverter process error:", error);
+          const message = error?.message || 'Terjadi kesalahan yang tidak diketahui.';
+          const status = document.getElementById('processing-status');
+          if (status) status.textContent = `Proses belum berhasil: ${message}`;
+          document.getElementById('view-processing').classList.add('hidden');
+          document.getElementById('view-workspace').classList.remove('hidden');
+          const button = document.getElementById('process-action-btn');
+          if (button) {
+            button.disabled = false;
+            button.classList.remove('opacity-60', 'cursor-not-allowed');
+          }
+          alert(message);
         }
       }
 
@@ -2250,6 +2259,8 @@
           throw new Error(`Fungsi ${conversionType} belum terhubung ke endpoint konversi yang sesuai.`);
         }
 
+        if (!this.files[0]?.file) throw new Error('File sumber tidak ditemukan. Silakan pilih ulang dokumennya.');
+
         const formData = new FormData();
         let uploadFile = this.files[0].file;
         if (conversionType.startsWith('pdf-to-')) {
@@ -2260,22 +2271,55 @@
         formData.append('format', config.format);
         formData.append('conversionType', conversionType);
 
-        const response = await fetch(`/api/convert?format=${encodeURIComponent(config.format)}&type=${encodeURIComponent(conversionType)}`, {
-          method: 'POST',
-          body: formData
-        });
+        // Metadata ini membantu backend memilih jalur ekspor yang menjaga ukuran slide.
+        // Backend tetap harus meneruskan opsi ini ke layanan konversi yang dipakai.
+        if (conversionType === 'ppt-to-pdf') {
+          formData.append('preserveLayout', 'true');
+          formData.append('renderQuality', 'high');
+          formData.append('pageSize', 'source');
+        }
 
-        if (!response.ok) {
-          // Tangkap pesan error JSON atau Text asli dari server
-          let serverErrorMsg = 'Gagal mengonversi dokumen via server Adobe.';
+        let response;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 180000);
           try {
-            const errData = await response.json();
-            if (errData && errData.error) serverErrorMsg = errData.error;
-          } catch (e) {
-            const rawText = await response.text().catch(() => '');
-            if (rawText) serverErrorMsg = `Server Response (${response.status}): ${rawText}`;
+            response = await fetch(`/api/convert?format=${encodeURIComponent(config.format)}&type=${encodeURIComponent(conversionType)}`, {
+              method: 'POST',
+              body: formData,
+              signal: controller.signal,
+              cache: 'no-store'
+            });
+          } finally {
+            clearTimeout(timeoutId);
           }
-          throw new Error(serverErrorMsg);
+        } catch (networkError) {
+          if (networkError?.name === 'AbortError') {
+            throw new Error('Waktu konversi habis setelah 3 menit. Coba file yang lebih kecil atau periksa status layanan konversi.');
+          }
+          throw new Error(`Tidak dapat terhubung ke server konversi: ${networkError?.message || 'koneksi terputus'}. Periksa deployment /api/convert dan koneksi internet.`);
+        }
+
+        // Baca body tepat satu kali. Kode lama mencoba response.json() lalu
+        // response.text() pada body yang sudah dikonsumsi sehingga pesan asli hilang.
+        const responseType = (response.headers.get('content-type') || '').toLowerCase();
+        if (!response.ok || responseType.includes('application/json') || responseType.includes('text/plain') || responseType.includes('text/html')) {
+          const rawBody = await response.text().catch(() => '');
+          let detail = rawBody;
+          try {
+            const payload = JSON.parse(rawBody);
+            detail = payload.error || payload.message || payload.detail || rawBody;
+          } catch (_) {}
+          const statusHint = response.status === 401 || response.status === 403
+            ? 'Periksa kredensial dan izin API di server.'
+            : response.status === 413
+              ? 'Ukuran file melewati batas upload server.'
+              : response.status === 429
+                ? 'Batas pemakaian API tercapai. Coba lagi setelah limit tersedia.'
+                : response.status >= 500
+                  ? 'Periksa log server /api/convert dan kredensial layanan konversi.'
+                  : 'Periksa format file dan konfigurasi endpoint.';
+          throw new Error(`Konversi gagal (HTTP ${response.status}). ${detail ? String(detail).slice(0, 700) : 'Server tidak memberikan detail kesalahan.'} ${statusHint}`);
         }
 
         document.getElementById('processing-progress-bar').style.width = '90%';
@@ -2525,12 +2569,18 @@
           body: formData
         });
         if (!response.ok) {
-          let message = `Gagal mengubah ${file.name} menjadi PDF.`;
+          const rawBody = await response.text().catch(() => '');
+          let detail = rawBody;
           try {
-            const data = await response.json();
-            if (data?.error) message = `${file.name}: ${data.error}`;
+            const payload = JSON.parse(rawBody);
+            detail = payload.error || payload.message || payload.detail || rawBody;
           } catch (_) {}
-          throw new Error(message);
+          throw new Error(`${file.name}: konversi ke PDF gagal (HTTP ${response.status}). ${detail || 'Server tidak memberikan detail kesalahan.'}`);
+        }
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('application/json') || contentType.includes('text/html')) {
+          const detail = await response.text().catch(() => '');
+          throw new Error(`${file.name}: server mengembalikan respons non-PDF. ${detail.slice(0, 500)}`);
         }
         const blob = await response.blob();
         const signature = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
